@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30413.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarshmallowAvalanche", "MarshmallowAvalanche.csproj", "{311EBC94-C004-40C1-ADD4-33917A06B844}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{311EBC94-C004-40C1-ADD4-33917A06B844}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{311EBC94-C004-40C1-ADD4-33917A06B844}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{311EBC94-C004-40C1-ADD4-33917A06B844}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{311EBC94-C004-40C1-ADD4-33917A06B844}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {542A7811-9487-4513-8FB9-C81D2B19DF24}
+	EndGlobalSection
+EndGlobal
