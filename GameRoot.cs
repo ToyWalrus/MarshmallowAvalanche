@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using ToyWalrus.Rendering;
+using MarshmallowAvalanche.Utils;
 
 
 namespace MarshmallowAvalanche {
@@ -13,14 +14,14 @@ namespace MarshmallowAvalanche {
         //private Camera camera;
         private RectDrawer whiteRectangle;
         private RectDrawer background;
-        private Vector2 rectPosition;
+        //private Vector2 rectPosition;
+        private Character marshmallow;
 
         public const int DesiredWindowHeight = 800;
         public const int DesiredWindowWidth = 500;
 
         public GameRoot() {
             g = new GraphicsDeviceManager(this);
-
 
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
@@ -37,7 +38,7 @@ namespace MarshmallowAvalanche {
 
             whiteRectangle = new RectDrawer(new Vector2(30, 60));
             background = new RectDrawer(new Vector2(DesiredWindowWidth, DesiredWindowHeight));
-            rectPosition = new Vector2(DesiredWindowWidth / 2, DesiredWindowHeight - 60);
+            marshmallow = new Character(new Vector2(DesiredWindowWidth / 2, DesiredWindowHeight - whiteRectangle.Size.Y), whiteRectangle.Size);
 
             g.PreferredBackBufferWidth = DesiredWindowWidth;
             g.PreferredBackBufferHeight = DesiredWindowHeight;
@@ -52,7 +53,7 @@ namespace MarshmallowAvalanche {
             sb = new SpriteBatch(GraphicsDevice);
             whiteRectangle.Initialize(GraphicsDevice);
             background.Initialize(GraphicsDevice, Color.DeepSkyBlue);
-
+            Logger.InitFont(Content.Load<SpriteFont>("DefaultFont"));
         }
 
         protected override void UnloadContent() {
@@ -60,28 +61,16 @@ namespace MarshmallowAvalanche {
             sb.Dispose();
             whiteRectangle.Dispose();
             background.Dispose();
+            Logger.DisposeTexture();
         }
 
         protected override void Update(GameTime gameTime) {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            float speed = 200;
-            float delta = speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
             KeyboardState keyboard = Keyboard.GetState();
-
-            if (keyboard.IsKeyDown(Keys.Right)) {
-                rectPosition.X += delta;
-            }
-            if (keyboard.IsKeyDown(Keys.Left)) {
-                rectPosition.X -= delta;
-            }
-            if (keyboard.IsKeyDown(Keys.Up)) {
-                rectPosition.Y -= delta;
-            }
-            if (keyboard.IsKeyDown(Keys.Down)) {
-                rectPosition.Y += delta;
-            }
+            marshmallow.UpdateKeyboardState(keyboard);
+            marshmallow.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -91,7 +80,10 @@ namespace MarshmallowAvalanche {
 
             sb.Begin(/*transformMatrix: camera.ViewTransformMatrix*/);
             background.Draw(sb, Vector2.Zero);
-            whiteRectangle.Draw(sb, rectPosition);
+            whiteRectangle.Draw(sb, marshmallow.Position);
+
+            Logger.DrawText(sb, marshmallow.State.ToString(), new Vector2(DesiredWindowWidth / 2, 20), Color.AntiqueWhite);
+
             sb.End();
 
             base.Draw(gameTime);
