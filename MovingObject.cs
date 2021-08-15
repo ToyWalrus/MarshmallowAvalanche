@@ -3,18 +3,23 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 
+//https://gamedevelopment.tutsplus.com/tutorials/basic-2d-platformer-physics-part-2--cms-25922
 namespace MarshmallowAvalanche {
     // Top left corner is 0,0 in local coordinates
     public class MovingObject {
+        public const float GravityConst = 9.8f;
+
         public MovingObject(Vector2 position, Vector2 size) {
-            GravityModifier = 1;
+            gravityModifier = 1;
             Position = position;
             Size = size;
 
-            onRightWall = false;
-            onLeftWall = false;
-            onGround = Position.Y == GameRoot.DesiredWindowHeight - Size.Y;
+            OnRightWall = false;
+            OnLeftWall = false;
+            Grounded = Position.Y == GameRoot.DesiredWindowHeight - Size.Y;
         }
+        
+        public Vector2 Size { get; protected set; }
 
         protected Vector2 _position;
         public Vector2 Position {
@@ -31,6 +36,10 @@ namespace MarshmallowAvalanche {
         public Vector2 PreviousPosition { get; protected set; }
 
         protected Vector2 _velocity;
+        /// <summary>
+        /// The Y axis is inverted, so positive velocity in the Y
+        /// direction means down, while negative means up.
+        /// </summary>
         public Vector2 Velocity {
             get => _velocity;
             set {
@@ -40,53 +49,67 @@ namespace MarshmallowAvalanche {
         }
         public Vector2 PreviousVelocity { get; protected set; }
 
-        public float GravityModifier { get; set; }
-        public Vector2 Size { get; protected set; }
-        public Vector2 BoundingBoxOffset { get => _position; }
-
         protected bool wasOnRightWall;
-        protected bool onRightWall;
+        public bool OnRightWall { get; private set; }
 
         protected bool wasOnLeftWall;
-        protected bool onLeftWall;
+        public bool OnLeftWall { get; private set; }
 
         protected bool wasOnGround;
-        protected bool onGround;
+        public bool Grounded { get; private set; }
+
+        protected float gravityModifier;
 
         public virtual void Update(GameTime gt) {
-            wasOnGround = onGround;
-            wasOnRightWall = onRightWall;
-            wasOnLeftWall = onLeftWall;
+            wasOnGround = Grounded;
+            wasOnRightWall = OnRightWall;
+            wasOnLeftWall = OnLeftWall;
 
-            _velocity.Y += GravityModifier * 9.8f * (float)gt.ElapsedGameTime.TotalSeconds;
+            float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
 
-            Position += Velocity * (float)gt.ElapsedGameTime.TotalSeconds;
+            float additionalWeight = 1;
+            if (_velocity.Y > 0) {
+                additionalWeight = 1.5f; // fall faster
+            } else if (_velocity.Y < 0) {
+                additionalWeight = .85f; // rise faster
+            }
+
+            _velocity.Y += gravityModifier * GravityConst * additionalWeight;
+            Position += Velocity * deltaTime;
+        }
+
+        public virtual void SetGravityModifier(float value) {
+            gravityModifier = value;
+        }
+
+        public virtual float GetGravityModifier() {
+            return gravityModifier;
         }
 
         private void CheckForGrounded() {
             if (_position.Y + Size.Y >= GameRoot.DesiredWindowHeight) {
                 _position.Y = GameRoot.DesiredWindowHeight - Size.Y;
-                onGround = true;
+                Grounded = true;
             } else {
-                onGround = false;
+                Grounded = false;
             }
         }
 
         private void CheckForOnLeftWall() {
             if (_position.X <= 0) {
                 _position.X = 0;
-                onLeftWall = true;
+                OnLeftWall = true;
             } else {
-                onLeftWall = false;
+                OnLeftWall = false;
             }
         }
 
         private void CheckForOnRightWall() {
             if (_position.X + Size.X >= GameRoot.DesiredWindowWidth) {
                 _position.X = GameRoot.DesiredWindowWidth - Size.X;
-                onRightWall = true;
+                OnRightWall = true;
             } else {
-                onRightWall = false;
+                OnRightWall = false;
             }
         }
     }

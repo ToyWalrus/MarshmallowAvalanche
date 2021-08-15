@@ -39,6 +39,7 @@ namespace MarshmallowAvalanche {
             whiteRectangle = new RectDrawer(new Vector2(30, 60));
             background = new RectDrawer(new Vector2(DesiredWindowWidth, DesiredWindowHeight));
             marshmallow = new Character(new Vector2(DesiredWindowWidth / 2, DesiredWindowHeight - whiteRectangle.Size.Y), whiteRectangle.Size);
+            marshmallow.SetGravityModifier(5);
 
             g.PreferredBackBufferWidth = DesiredWindowWidth;
             g.PreferredBackBufferHeight = DesiredWindowHeight;
@@ -82,7 +83,9 @@ namespace MarshmallowAvalanche {
             background.Draw(sb, Vector2.Zero);
             whiteRectangle.Draw(sb, marshmallow.Position);
 
-            Logger.DrawText(sb, marshmallow.State.ToString(), new Vector2(DesiredWindowWidth / 2, 20), Color.AntiqueWhite);
+            Logger.DrawText(sb, marshmallow.State.ToString(), new Vector2(50, 20), Color.AntiqueWhite, Vector2.One, false);
+            Logger.DrawText(sb, $"Grounded: {marshmallow.Grounded}", new Vector2(50, 50), Color.AntiqueWhite, Vector2.One, false);
+            Logger.DrawText(sb, $"Grav Modifier: {marshmallow.GetGravityModifier()}", new Vector2(50, 80), Color.AntiqueWhite, Vector2.One, false);
 
             sb.End();
 

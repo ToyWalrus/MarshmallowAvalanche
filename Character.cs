@@ -6,27 +6,36 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MarshmallowAvalanche {
     public class Character : MovingObject {
-        public Character(Vector2 position, Vector2 size) : base(position, size) {
-            JumpSpeed = 410;
-            MoveSpeed = 160;
-            SlideSpeed = MoveSpeed / 2;
-            MinJumpSpeed = JumpSpeed / 2;
-
-            inputs = new bool[Enum.GetValues(typeof(Input)).Length];
-            previousInputs = new bool[inputs.Length];
-        }
-
-
         public enum Input {
             Left = 0,
             Right = 1,
             Jump = 2,
         }
 
+        private bool[] frameInput;
+        private bool[] prevFrameInput;
+        private float overriddenGravityModifier;
+
+        public float JumpSpeed { get; set; }
+        public float MoveSpeed { get; set; }
+        public float SlideSpeed { get; set; }
+        
+
+        public Character(Vector2 position, Vector2 size) : base(position, size) {
+            JumpSpeed = 810;
+            MoveSpeed = 300;
+            SlideSpeed = MoveSpeed / 4;
+
+            frameInput = new bool[Enum.GetValues(typeof(Input)).Length];
+            prevFrameInput = new bool[frameInput.Length];
+
+            overriddenGravityModifier = float.NaN;
+        }
+
         public CharacterState State {
             get {
-                if (Velocity.Y != 0 && !onGround) {
-                    if (onLeftWall || onRightWall) {
+                if (Velocity.Y != 0 && !Grounded) {
+                    if (OnLeftWall || OnRightWall) {
                         return CharacterState.Sliding;
                     }
                     return CharacterState.Jumping;
@@ -38,18 +47,17 @@ namespace MarshmallowAvalanche {
             }
         }
 
-        protected bool[] inputs;
-        protected bool[] previousInputs; // from prev frame
-
-        public float JumpSpeed { get; set; }
-        public float MinJumpSpeed { get; set; }
-        public float MoveSpeed { get; set; }
-        public float SlideSpeed { get; set; }
+        public override float GetGravityModifier() {
+            if (!float.IsNaN(overriddenGravityModifier)) {
+                return overriddenGravityModifier;
+            }
+            return base.GetGravityModifier();
+        }
 
         public void UpdateKeyboardState(KeyboardState keyboard) {
-            inputs[(int)Input.Left] = keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A);
-            inputs[(int)Input.Right] = keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D);
-            inputs[(int)Input.Jump] = keyboard.IsKeyDown(Keys.Space) || keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up);
+            frameInput[(int)Input.Left] = keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A);
+            frameInput[(int)Input.Right] = keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D);
+            frameInput[(int)Input.Jump] = keyboard.IsKeyDown(Keys.Space) || keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up);
         }
 
         public override void Update(GameTime gt) {
@@ -59,41 +67,48 @@ namespace MarshmallowAvalanche {
         }
 
         private void UpdatePreviousInputs() {
-            for (int i = 0; i < inputs.Length; ++i) {
-                previousInputs[i] = inputs[i];
-                inputs[i] = false;
+            for (int i = 0; i < frameInput.Length; ++i) {
+                prevFrameInput[i] = frameInput[i];
+                frameInput[i] = false;
             }
         }
 
         private void UpdateFromInputs() {
-            if (KeyState(Input.Jump) && onGround) {
-                _velocity.Y = JumpSpeed;
-            } else if (InputReleased(Input.Jump) && _velocity.Y > 0) {
-                _velocity.Y = MathF.Min(_velocity.Y, MinJumpSpeed);
+            if (KeyPressed(Input.Jump) && Grounded) {
+                _velocity.Y = -JumpSpeed;
+            } else if (KeyReleased(Input.Jump) && _velocity.Y < 0) {
+                _velocity.Y /= 2;
             }
 
             if (KeyState(Input.Left) == KeyState(Input.Right)) {
                 _velocity.X = 0;
             } else if (KeyState(Input.Left)) {
-                _velocity.X = onLeftWall ? 0 : -MoveSpeed;
+                _velocity.X = OnLeftWall ? 0 : -MoveSpeed;
             } else {
-                _velocity.X = onRightWall ? 0 : MoveSpeed;
+                _velocity.X = OnRightWall ? 0 : MoveSpeed;
+            }
+
+            if (((KeyState(Input.Left) && OnLeftWall) || (KeyState(Input.Right) && OnRightWall)) && _velocity.Y > 0) {
+                _velocity.Y = SlideSpeed;
+                overriddenGravityModifier = 0;
+            } else {
+                overriddenGravityModifier = float.NaN;
             }
         }
 
-        private bool InputReleased(Input input) {
+        private bool KeyReleased(Input input) {
             int idx = (int)input;
-            return !inputs[idx] && previousInputs[idx];
+            return !frameInput[idx] && prevFrameInput[idx];
         }
 
-        private bool InputPressed(Input input) {
+        private bool KeyPressed(Input input) {
             int idx = (int)input;
-            return inputs[idx] && !previousInputs[idx];
+            return frameInput[idx] && !prevFrameInput[idx];
         }
 
         private bool KeyState(Input input) {
             int idx = (int)input;
-            return inputs[idx];
+            return frameInput[idx] || prevFrameInput[idx];
         }
 
     }
