@@ -49,32 +49,41 @@ namespace MarshmallowAvalanche {
         }
         public Vector2 PreviousVelocity { get; protected set; }
 
-        protected bool wasOnRightWall;
+        protected bool wasOnRightWall = false;
         public bool OnRightWall { get; private set; }
 
         protected bool wasOnLeftWall;
         public bool OnLeftWall { get; private set; }
 
+        protected readonly int inputGracePeriod = 3;
+        protected int ticksSinceLeavingGround = 0;
         protected bool wasOnGround;
         public bool Grounded { get; private set; }
 
         protected float gravityModifier;
 
         public virtual void Update(GameTime gt) {
-            wasOnGround = Grounded;
-            wasOnRightWall = OnRightWall;
-            wasOnLeftWall = OnLeftWall;
+            if (!Grounded && wasOnGround) {
+                ticksSinceLeavingGround++;
+                if (ticksSinceLeavingGround > inputGracePeriod) {
+                    wasOnGround = false;
+                    ticksSinceLeavingGround = 0;
+                }
+            } else {
+                wasOnGround = Grounded;
+                ticksSinceLeavingGround = 0;
+            }
 
             float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
 
-            float additionalWeight = 1;
+            float directionModifier = 1;
             if (_velocity.Y > 0) {
-                additionalWeight = 1.5f; // fall faster
-            } else if (_velocity.Y < 0) {
-                additionalWeight = .85f; // rise faster
+                directionModifier = 1.25f; // fall faster
+            } else if (_velocity.Y < 0 && !OnLeftWall && !OnRightWall) {
+                directionModifier = .85f; // rise faster
             }
 
-            _velocity.Y += gravityModifier * GravityConst * additionalWeight;
+            _velocity.Y += gravityModifier * GravityConst * directionModifier;
             Position += Velocity * deltaTime;
         }
 
