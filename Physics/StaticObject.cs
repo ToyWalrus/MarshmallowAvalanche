@@ -20,5 +20,9 @@ namespace MarshmallowAvalanche.Physics {
         public override void Update(GameTime gt) {
             ClearCollisions();
         }
+
+        public override bool CanCollideWith(PhysicsObject other) {
+            return !other.IsStatic;
+        }
     }
 }

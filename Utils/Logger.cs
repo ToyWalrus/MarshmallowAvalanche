@@ -66,7 +66,7 @@ namespace MarshmallowAvalanche.Utils {
             sb.DrawString(font, text, position - (stringSize / 2), color, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
         }
 
-        public static void DrawRect(SpriteBatch sb, Rectangle rect, Color color, float thickness = 1) {
+        public static void DrawOutlineRect(SpriteBatch sb, Rectangle rect, Color color, float thickness = 1) {
             var topLeft = new Vector2(rect.X, rect.Y);
             var topRight = new Vector2(rect.X + rect.Width, rect.Y);
             var botLeft = new Vector2(rect.X, rect.Y + rect.Height);
@@ -76,6 +76,10 @@ namespace MarshmallowAvalanche.Utils {
             DrawLine(sb, topRight, botRight, color, thickness);
             DrawLine(sb, botRight, botLeft, color, thickness);
             DrawLine(sb, botLeft, topLeft, color, thickness);
+        }
+
+        public static void DrawFilledRect(SpriteBatch sb, Rectangle rect, Color color) {
+            sb.Draw(GetTexture(sb), rect, color);
         }
         #endregion
     }
