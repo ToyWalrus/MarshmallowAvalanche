@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using MarshmallowAvalanche.Physics;
 
 namespace MarshmallowAvalanche {
     public class Character : MovingObject {
@@ -25,11 +26,17 @@ namespace MarshmallowAvalanche {
         public float AirMoveSpeed { get; set; }
         public float SlideSpeed { get; set; }
 
-        public Character(Vector2 position, Vector2 size) : base(position, size) {
+        public override string Tag {
+            get;
+            protected set;
+        }
+
+        public Character(Vector2 position, Vector2 size, string tag = "Player") : base(position, size) {
             JumpSpeed = 800;
             GroundMoveSpeed = 550;
             AirMoveSpeed = GroundMoveSpeed * .8f;
             SlideSpeed = GroundMoveSpeed / 4;
+            Tag = tag;
 
             frameInput = new bool[Enum.GetValues(typeof(Input)).Length];
             prevFrameInput = new bool[frameInput.Length];

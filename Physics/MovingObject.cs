@@ -2,9 +2,9 @@
 using Microsoft.Xna.Framework;
 
 //https://gamedevelopment.tutsplus.com/tutorials/basic-2d-platformer-physics-part-2--cms-25922
-namespace MarshmallowAvalanche {
+namespace MarshmallowAvalanche.Physics {
     // Top left corner is 0,0 in local coordinates
-    public class MovingObject : PhysicsObject {
+    public abstract class MovingObject : PhysicsObject {
         public const float GravityConst = 9.8f;
 
         public MovingObject(Vector2 position, Vector2 size) : base(position, size) {
@@ -63,7 +63,7 @@ namespace MarshmallowAvalanche {
 
         protected float gravityModifier;
 
-        public virtual void Update(GameTime gt) {
+        public override void Update(GameTime gt) {
             if (!Grounded && wasOnGround) {
                 ticksSinceLeavingGround++;
                 if (ticksSinceLeavingGround > inputGracePeriod) {
@@ -96,10 +96,6 @@ namespace MarshmallowAvalanche {
 
         public virtual float GetGravityModifier() {
             return gravityModifier;
-        }
-
-        public void AddCollision(CollisionData collision) {
-            allCollidingObjects.Add(collision);
         }
 
         private void CheckForCollisions() {
@@ -136,7 +132,7 @@ namespace MarshmallowAvalanche {
                 }
             }
 
-            allCollidingObjects.Clear();
+            ClearCollisions();
         }
     }
 }
