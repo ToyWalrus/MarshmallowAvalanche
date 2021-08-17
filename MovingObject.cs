@@ -1,41 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 //https://gamedevelopment.tutsplus.com/tutorials/basic-2d-platformer-physics-part-2--cms-25922
 namespace MarshmallowAvalanche {
     // Top left corner is 0,0 in local coordinates
-    public class MovingObject {
+    public class MovingObject : PhysicsObject {
         public const float GravityConst = 9.8f;
 
-        public MovingObject(Vector2 position, Vector2 size) {
+        public MovingObject(Vector2 position, Vector2 size) : base(position, size) {
             gravityModifier = 1;
-            Position = position;
-            Size = size;
-
+            TouchingTopEdge = false;
             OnRightWall = false;
             OnLeftWall = false;
-            Grounded = Position.Y == GameRoot.DesiredWindowHeight - Size.Y;
+            Grounded = false;
         }
-        
-        public Vector2 Size { get; protected set; }
 
-        protected Vector2 _position;
-        public Vector2 Position {
-            get => _position;
-            set {
-                PreviousPosition = _position;
-                _position = value;
-
-                CheckForGrounded();
-                CheckForOnLeftWall();
-                CheckForOnRightWall();
-            }
+        public MovingObject(Rectangle bounds) : base(bounds) {
+            gravityModifier = 1;
+            TouchingTopEdge = false;
+            OnRightWall = false;
+            OnLeftWall = false;
+            Grounded = false;
         }
-        public Vector2 PreviousPosition { get; protected set; }
 
-        protected Vector2 _velocity;
         /// <summary>
         /// The Y axis is inverted, so positive velocity in the Y
         /// direction means down, while negative means up.
@@ -47,13 +34,27 @@ namespace MarshmallowAvalanche {
                 _velocity = value;
             }
         }
+        protected Vector2 _velocity;
+
+        public override Vector2 Position {
+            get => _position;
+            set {
+                PreviousPosition = _position;
+                _position = value;
+            }
+        }
+
         public Vector2 PreviousVelocity { get; protected set; }
+        public Vector2 PreviousPosition { get; protected set; }
 
         protected bool wasOnRightWall = false;
         public bool OnRightWall { get; private set; }
 
         protected bool wasOnLeftWall;
         public bool OnLeftWall { get; private set; }
+
+        protected bool wasTouchingTopEdge;
+        public bool TouchingTopEdge { get; private set; }
 
         protected readonly int inputGracePeriod = 3;
         protected int ticksSinceLeavingGround = 0;
@@ -76,15 +77,17 @@ namespace MarshmallowAvalanche {
 
             float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
 
-            float directionModifier = 1;
+            float directionalSpeedModifier = 1;
             if (_velocity.Y > 0) {
-                directionModifier = 1.25f; // fall faster
+                directionalSpeedModifier = 1.25f; // fall faster
             } else if (_velocity.Y < 0 && !OnLeftWall && !OnRightWall) {
-                directionModifier = .85f; // rise faster
+                directionalSpeedModifier = .85f; // rise faster
             }
 
-            _velocity.Y += gravityModifier * GravityConst * directionModifier;
+            _velocity.Y += gravityModifier * GravityConst * directionalSpeedModifier;
             Position += Velocity * deltaTime;
+
+            CheckForCollisions();
         }
 
         public virtual void SetGravityModifier(float value) {
@@ -95,31 +98,45 @@ namespace MarshmallowAvalanche {
             return gravityModifier;
         }
 
-        private void CheckForGrounded() {
-            if (_position.Y + Size.Y >= GameRoot.DesiredWindowHeight) {
-                _position.Y = GameRoot.DesiredWindowHeight - Size.Y;
-                Grounded = true;
-            } else {
-                Grounded = false;
-            }
+        public void AddCollision(CollisionData collision) {
+            allCollidingObjects.Add(collision);
         }
 
-        private void CheckForOnLeftWall() {
-            if (_position.X <= 0) {
-                _position.X = 0;
-                OnLeftWall = true;
-            } else {
-                OnLeftWall = false;
-            }
-        }
+        private void CheckForCollisions() {
+            OnLeftWall = false;
+            OnRightWall = false;
+            TouchingTopEdge = false;
+            Grounded = false;
 
-        private void CheckForOnRightWall() {
-            if (_position.X + Size.X >= GameRoot.DesiredWindowWidth) {
-                _position.X = GameRoot.DesiredWindowWidth - Size.X;
-                OnRightWall = true;
-            } else {
-                OnRightWall = false;
+            for (int i = 0; i < allCollidingObjects.Count; ++i) {
+                CollisionData cd = allCollidingObjects[i];
+                if (cd.overlap.X < 0) {
+                    OnLeftWall = true;
+                    if (_velocity.X < 0) {
+                        _position.X = cd.other.Bounds.Right;
+                    }
+                }
+                if (cd.overlap.X > 0) {
+                    OnRightWall = true;
+                    if (_velocity.X > 0) {
+                        _position.X = cd.other.Bounds.Right - Size.X;
+                    }
+                }
+                if (cd.overlap.Y < 0) {
+                    TouchingTopEdge = true;
+                    if (_velocity.Y < 0) {
+                        _position.Y = cd.other.Bounds.Bottom;
+                    }
+                }
+                if (cd.overlap.Y > 0) {
+                    Grounded = true;
+                    if (_velocity.Y > 0) {
+                        _position.Y = cd.other.Bounds.Top - Size.Y;
+                    }
+                }
             }
+
+            allCollidingObjects.Clear();
         }
     }
 }
