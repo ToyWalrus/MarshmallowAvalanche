@@ -29,8 +29,8 @@ namespace MarshmallowAvalanche.Utils {
 
             if (!rect.Intersects(other)) return false;
 
-            int signX = Math.Sign(rect.Center.X - other.Center.X);
-            int signY = Math.Sign(rect.Center.Y - other.Center.Y);
+            int signX = Math.Sign(other.Center.X - rect.Center.X);
+            int signY = Math.Sign(other.Center.Y - rect.Center.Y);
 
             int rectHalfX = rect.Width / 2;
             int rectHalfY = rect.Height / 2;

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using MarshmallowAvalanche.Utils;
 
 namespace MarshmallowAvalanche.Physics {
     public abstract class PhysicsObject {
@@ -25,7 +26,7 @@ namespace MarshmallowAvalanche.Physics {
             protected set;
         }
 
-        public Rectangle Bounds => new Rectangle(Position.ToPoint(), Size.ToPoint());
+        public RectF Bounds => new RectF(Position, Size);
 
         public PhysicsObject(Vector2 position, Vector2 size) {
             _position = position;
@@ -43,11 +44,11 @@ namespace MarshmallowAvalanche.Physics {
             return true;
         }
 
-        public void AddCollision(CollisionData collision) {
+        public virtual void AddCollision(CollisionData collision) {
             allCollidingObjects.Add(collision);
         }
 
-        protected void ClearCollisions() {
+        public void ClearCollisions() {
             allCollidingObjects.Clear();
         }
     }

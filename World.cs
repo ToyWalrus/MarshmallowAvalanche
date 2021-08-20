@@ -64,54 +64,49 @@ namespace MarshmallowAvalanche {
         public void Update(GameTime gt) {
             foreach (PhysicsObject obj in objectSections.Keys) {
                 obj.Update(gt);
-                UpdateContainingSection(obj);
+                UpdateCollisionDataFor(obj);
             }
-            UpdateCollisionData();
         }
 
-        private void UpdateCollisionData() {
-            List<WorldGridSection> sections = grid.GetSections();
-            for (int i = 0; i < sections.Count; ++i) {
-                List<PhysicsObject> objectsInSection = sections[i].containedObjects;
+        private void UpdateCollisionDataFor(PhysicsObject obj) {
+            if (obj.IsStatic && !(obj as StaticObject).hasSetCollisionBoundsInWorld) {
+                UpdateContainingSection(obj);
+                (obj as StaticObject).hasSetCollisionBoundsInWorld = true;
+            } else if (obj.IsDynamic && (obj as MovingObject).Velocity.Length() > 0) {
+                UpdateContainingSection(obj);
+            }
+
+            obj.ClearCollisions();
+            foreach (WorldGridSection section in objectSections[obj]) {
+                if (section == null) continue;
+
+                List<PhysicsObject> objectsInSection = section.containedObjects;
                 for (int a = 0; a < objectsInSection.Count; ++a) {
-                    PhysicsObject objA = objectsInSection[a];
-                    for (int b = a + 1; b < objectsInSection.Count - 1; ++b) {
-                        PhysicsObject objB = objectsInSection[b];
-                        if (objA.Bounds.Intersects(objB.Bounds, out Vector2 overlap)) {
-                            if (objA.CanCollideWith(objB)) {
-                                objA.AddCollision(new CollisionData(objB, overlap, objA.Position, objB.Position));
-                            }
-                            if (objB.CanCollideWith(objA)) {
-                                objB.AddCollision(new CollisionData(objA, -overlap, objB.Position, objA.Position));
-                            }
+                    PhysicsObject other = objectsInSection[a];
+                    if (obj == other) continue;
+
+                    if (obj.Bounds.Intersects(other.Bounds, out Vector2 overlap)) {
+                        if (obj.CanCollideWith(other)) {
+                            obj.AddCollision(new CollisionData(other, overlap, obj.Position, other.Position));
                         }
                     }
                 }
+
             }
         }
 
         private void UpdateContainingSection(PhysicsObject obj) {
             Rectangle bounds = obj.Bounds;
-            WorldGridSection topLeftSection = grid.GetSectionAtWorldPoint(bounds.Left, bounds.Top);
-            WorldGridSection topRightSection = grid.GetSectionAtWorldPoint(bounds.Right, bounds.Top);
-            WorldGridSection botLeftSection = grid.GetSectionAtWorldPoint(bounds.Left, bounds.Bottom);
-            WorldGridSection botRightSection = grid.GetSectionAtWorldPoint(bounds.Right, bounds.Bottom);
-
             List<WorldGridSection> objSections = objectSections[obj];
             for (int i = 0; i < objSections.Count; ++i) {
                 objSections[i]?.RemoveObject(obj);
             }
-
-            topLeftSection?.AddObject(obj);
-            topRightSection?.AddObject(obj);
-            botLeftSection?.AddObject(obj);
-            botRightSection?.AddObject(obj);
-
             objSections.Clear();
-            objSections.Add(topLeftSection);
-            objSections.Add(topRightSection);
-            objSections.Add(botLeftSection);
-            objSections.Add(botRightSection);
+
+            foreach (WorldGridSection section in grid.GetSectionsOverlappedBy(bounds)) {
+                section?.AddObject(obj);
+                objSections.Add(section);
+            }
         }
 
         #region Debugging
@@ -124,7 +119,9 @@ namespace MarshmallowAvalanche {
                 foreach (PhysicsObject obj in section.containedObjects) {
                     if (obj is Character) {
                         Logger.DrawFilledRect(sb, new Rectangle(section.positionX, section.positionY, grid.GridSectionWidth, grid.GridSectionHeight), new Color(0, 255, 0, 150));
-                        break;
+                        //break;
+                    } else if (obj is StaticObject) {
+                        Logger.DrawFilledRect(sb, new Rectangle(section.positionX, section.positionY, grid.GridSectionWidth, grid.GridSectionHeight), new Color(0, 0, 255, 150));
                     }
                 }
             }
@@ -198,6 +195,25 @@ namespace MarshmallowAvalanche {
             }
 
             return null;
+        }
+
+        public IEnumerable<WorldGridSection> GetSectionsOverlappedBy(Rectangle rectInWorld) {
+            WorldGridSection topLeftSection = GetSectionAtWorldPoint(rectInWorld.Left, rectInWorld.Top);
+            int offsetX, offsetY;
+
+            if (topLeftSection != null) {
+                offsetX = rectInWorld.Left - topLeftSection.positionX;
+                offsetY = rectInWorld.Top - topLeftSection.positionY;
+            } else {
+                offsetX = 0;
+                offsetY = 0;
+            }
+
+            for (int y = rectInWorld.Top - offsetY; y < rectInWorld.Bottom; y += GridSectionHeight) {
+                for (int x = rectInWorld.Left - offsetX; x < rectInWorld.Right; x += GridSectionWidth) {
+                    yield return GetSectionAtWorldPoint(x, y);
+                }
+            }
         }
 
         public WorldGridSection GetSectionAtGridPoint(Vector2 point) {

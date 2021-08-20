@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using MarshmallowAvalanche.Utils;
+using Microsoft.Xna.Framework;
 
 namespace MarshmallowAvalanche.Physics {
     public class StaticObject : PhysicsObject {
@@ -17,12 +18,14 @@ namespace MarshmallowAvalanche.Physics {
             protected set;
         }
 
-        public override void Update(GameTime gt) {
-            ClearCollisions();
-        }
+        public bool hasSetCollisionBoundsInWorld = false;
+
 
         public override bool CanCollideWith(PhysicsObject other) {
             return !other.IsStatic;
         }
+
+        public override void Update(GameTime gt) { }
+        public override void AddCollision(CollisionData collision) { }
     }
 }

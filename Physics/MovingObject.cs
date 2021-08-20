@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using MarshmallowAvalanche.Utils;
 
 //https://gamedevelopment.tutsplus.com/tutorials/basic-2d-platformer-physics-part-2--cms-25922
 namespace MarshmallowAvalanche.Physics {
@@ -9,6 +11,7 @@ namespace MarshmallowAvalanche.Physics {
 
         public MovingObject(Vector2 position, Vector2 size) : base(position, size) {
             gravityModifier = 1;
+            MaxFallSpeed = 500;
             TouchingTopEdge = false;
             OnRightWall = false;
             OnLeftWall = false;
@@ -17,6 +20,7 @@ namespace MarshmallowAvalanche.Physics {
 
         public MovingObject(Rectangle bounds) : base(bounds) {
             gravityModifier = 1;
+            MaxFallSpeed = 500;
             TouchingTopEdge = false;
             OnRightWall = false;
             OnLeftWall = false;
@@ -46,6 +50,7 @@ namespace MarshmallowAvalanche.Physics {
 
         public Vector2 PreviousVelocity { get; protected set; }
         public Vector2 PreviousPosition { get; protected set; }
+        public float MaxFallSpeed { get; set; }
 
         protected bool wasOnRightWall = false;
         public bool OnRightWall { get; private set; }
@@ -75,19 +80,12 @@ namespace MarshmallowAvalanche.Physics {
                 ticksSinceLeavingGround = 0;
             }
 
-            float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
+            CalculateNewPosition(gt, Position, Velocity, out Vector2 newPos, out Vector2 newVel);
 
-            float directionalSpeedModifier = 1;
-            if (_velocity.Y > 0) {
-                directionalSpeedModifier = 1.25f; // fall faster
-            } else if (_velocity.Y < 0 && !OnLeftWall && !OnRightWall) {
-                directionalSpeedModifier = .85f; // rise faster
-            }
+            Position = newPos;
+            Velocity = newVel;
 
-            _velocity.Y += gravityModifier * GravityConst * directionalSpeedModifier;
-            Position += Velocity * deltaTime;
-
-            CheckForCollisions();
+            Logger.LogToConsole("--- Update object ---");
         }
 
         public virtual void SetGravityModifier(float value) {
@@ -98,7 +96,28 @@ namespace MarshmallowAvalanche.Physics {
             return gravityModifier;
         }
 
-        private void CheckForCollisions() {
+        private void CalculateNewPosition(GameTime gt, Vector2 currentPosition, Vector2 currentVelocity, out Vector2 newPosition, out Vector2 newVelocity) {
+            Vector2 calculatedVelocity = currentVelocity;
+
+            float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
+
+            float directionalSpeedModifier = 1;
+            if (calculatedVelocity.Y > 0) {
+                directionalSpeedModifier = 1.25f; // fall faster
+            } else if (calculatedVelocity.Y < 0 && !OnLeftWall && !OnRightWall) {
+                directionalSpeedModifier = .85f; // rise faster
+            }
+
+            calculatedVelocity.Y += gravityModifier * GravityConst * directionalSpeedModifier;
+            calculatedVelocity.Y = MathF.Min(calculatedVelocity.Y, MaxFallSpeed);
+
+            CheckForCollisions(currentPosition + calculatedVelocity * deltaTime, calculatedVelocity, out newPosition, out newVelocity);
+        }
+
+        private void CheckForCollisions(Vector2 currentPosition, Vector2 currentVelocity, out Vector2 newPosition, out Vector2 newVelocity) {
+            newPosition = currentPosition;
+            newVelocity = currentVelocity;
+
             OnLeftWall = false;
             OnRightWall = false;
             TouchingTopEdge = false;
@@ -106,33 +125,42 @@ namespace MarshmallowAvalanche.Physics {
 
             for (int i = 0; i < allCollidingObjects.Count; ++i) {
                 CollisionData cd = allCollidingObjects[i];
-                if (cd.overlap.X < 0) {
-                    OnLeftWall = true;
-                    if (_velocity.X < 0) {
-                        _position.X = cd.other.Bounds.Right;
+                RectF otherBounds = cd.other.Bounds;
+
+                // We only care about the lesser overlap amount
+                bool xIsSmaller = Math.Abs(cd.overlap.X) < Math.Abs(cd.overlap.Y);
+                if (xIsSmaller) {
+                    if (cd.overlap.X < 0) {
+                        OnLeftWall = true;
+                        newPosition.X = otherBounds.Right;
+                        if (currentVelocity.X < 0) {
+                            newVelocity.X = 0;
+                        }
                     }
-                }
-                if (cd.overlap.X > 0) {
-                    OnRightWall = true;
-                    if (_velocity.X > 0) {
-                        _position.X = cd.other.Bounds.Right - Size.X;
+                    if (cd.overlap.X > 0) {
+                        OnRightWall = true;
+                        newPosition.X = otherBounds.Left - Size.X;
+                        if (currentVelocity.X > 0) {
+                            newVelocity.X = 0;
+                        }
                     }
-                }
-                if (cd.overlap.Y < 0) {
-                    TouchingTopEdge = true;
-                    if (_velocity.Y < 0) {
-                        _position.Y = cd.other.Bounds.Bottom;
+                } else {
+                    if (cd.overlap.Y < 0) {
+                        TouchingTopEdge = true;
+                        newPosition.Y = otherBounds.Bottom;
+                        if (currentVelocity.Y < 0) {
+                            newVelocity.Y = 0;
+                        }
                     }
-                }
-                if (cd.overlap.Y > 0) {
-                    Grounded = true;
-                    if (_velocity.Y > 0) {
-                        _position.Y = cd.other.Bounds.Top - Size.Y;
+                    if (cd.overlap.Y > 0) {
+                        Grounded = true;
+                        newPosition.Y = otherBounds.Top - Size.Y;
+                        if (currentVelocity.Y > 0) {
+                            newVelocity.Y = 0;
+                        }
                     }
                 }
             }
-
-            ClearCollisions();
         }
     }
 }
