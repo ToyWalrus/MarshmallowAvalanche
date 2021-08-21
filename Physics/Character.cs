@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MarshmallowAvalanche.Physics;
+using MarshmallowAvalanche.Utils;
 
 namespace MarshmallowAvalanche {
     public class Character : MovingObject {
@@ -46,11 +47,12 @@ namespace MarshmallowAvalanche {
 
         public CharacterState State {
             get {
-                if (Velocity.Y != 0 && !Grounded) {
-                    if (OnLeftWall || OnRightWall) {
+                if (!Grounded) {
+                    if (Velocity.Y > 0 && (OnLeftWall || wasOnLeftWall || OnRightWall || wasOnRightWall)) {
                         return CharacterState.Sliding;
+                    } else if (Velocity.Y != 0) {
+                        return CharacterState.Jumping;
                     }
-                    return CharacterState.Jumping;
                 }
                 if (Velocity.X != 0) {
                     return CharacterState.Moving;
@@ -111,10 +113,11 @@ namespace MarshmallowAvalanche {
         }
 
         private void CheckForWallInteraction() {
-            bool isOnLeftWall = KeyState(Input.Left) && OnLeftWall;
-            bool isOnRightWall = KeyState(Input.Right) && OnRightWall;
-            bool isWallJumping = KeyPressed(Input.Jump) && (isOnLeftWall || isOnRightWall) && !Grounded;
-            bool isSlidingDown = (isOnLeftWall || isOnRightWall) && _velocity.Y > 0;
+            bool isSliding = State == CharacterState.Sliding;
+            bool isOnLeftWall = KeyState(Input.Left) && isSliding;
+            bool isOnRightWall = KeyState(Input.Right) && isSliding;
+            bool isWallJumping = KeyPressed(Input.Jump) && isSliding;
+            bool isSlidingDown = isOnLeftWall || isOnRightWall;
 
             if (isWallJumping) {
                 float jumpForceMultiplier = 1.25f;

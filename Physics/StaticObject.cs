@@ -26,6 +26,5 @@ namespace MarshmallowAvalanche.Physics {
         }
 
         public override void Update(GameTime gt) { }
-        public override void AddCollision(CollisionData collision) { }
     }
 }

@@ -4,8 +4,6 @@ using MarshmallowAvalanche.Utils;
 
 namespace MarshmallowAvalanche.Physics {
     public abstract class PhysicsObject {
-        protected List<CollisionData> allCollidingObjects = new List<CollisionData>();
-
         public bool IsStatic => this is StaticObject;
         public bool IsDynamic => this is MovingObject;
 
@@ -44,12 +42,6 @@ namespace MarshmallowAvalanche.Physics {
             return true;
         }
 
-        public virtual void AddCollision(CollisionData collision) {
-            allCollidingObjects.Add(collision);
-        }
-
-        public void ClearCollisions() {
-            allCollidingObjects.Clear();
-        }
+        public virtual void CheckForCollisionWith(PhysicsObject other) { }
     }
 }

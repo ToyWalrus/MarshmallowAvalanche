@@ -74,24 +74,17 @@ namespace MarshmallowAvalanche {
                 (obj as StaticObject).hasSetCollisionBoundsInWorld = true;
             } else if (obj.IsDynamic && (obj as MovingObject).Velocity.Length() > 0) {
                 UpdateContainingSection(obj);
+                (obj as MovingObject).ResetCollisionStatus();
             }
 
-            obj.ClearCollisions();
             foreach (WorldGridSection section in objectSections[obj]) {
                 if (section == null) continue;
-
                 List<PhysicsObject> objectsInSection = section.containedObjects;
                 for (int a = 0; a < objectsInSection.Count; ++a) {
                     PhysicsObject other = objectsInSection[a];
                     if (obj == other) continue;
-
-                    if (obj.Bounds.Intersects(other.Bounds, out Vector2 overlap)) {
-                        if (obj.CanCollideWith(other)) {
-                            obj.AddCollision(new CollisionData(other, overlap, obj.Position, other.Position));
-                        }
-                    }
+                    obj.CheckForCollisionWith(other);
                 }
-
             }
         }
 
