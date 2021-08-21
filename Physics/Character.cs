@@ -77,8 +77,30 @@ namespace MarshmallowAvalanche {
         public override void Update(GameTime gt) {
             UpdateTimers(gt);
             UpdateFromInputs(gt);
+
+            if (!Grounded && wasOnGround) {
+                ticksSinceLeavingGround++;
+                if (ticksSinceLeavingGround > inputGracePeriod) {
+                    wasOnGround = false;
+                    ticksSinceLeavingGround = 0;
+                }
+            } else {
+                wasOnGround = Grounded;
+                ticksSinceLeavingGround = 0;
+            }
+
             base.Update(gt);
             UpdatePreviousInputs();
+        }
+
+        protected override float GetDirectionalSpeedModifier() {
+            float directionalSpeedModifier = 1;
+            if (_velocity.Y > 0) {
+                directionalSpeedModifier = 1.25f; // fall faster
+            } else if (_velocity.Y < 0 && !OnLeftWall && !OnRightWall) {
+                directionalSpeedModifier = .85f; // rise faster
+            }
+            return directionalSpeedModifier;
         }
 
         private void UpdateFromInputs(GameTime gt) {

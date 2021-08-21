@@ -51,7 +51,13 @@ namespace MarshmallowAvalanche.Utils {
         public Vector2 BotRight => new Vector2(Right, Bottom);
         public Vector2 BotLeft => new Vector2(Left, Bottom);
 
-        public Vector2 Size => new Vector2(Width, Height);
+        public Vector2 Size {
+            get => new Vector2(Width, Height);
+            set {
+                Width = value.X;
+                Height = value.Y;
+            }
+        }
 
         public Vector2 Center => new Vector2((Left + Right) / 2f, (Top + Bottom) / 2f);
 

@@ -68,30 +68,16 @@ namespace MarshmallowAvalanche.Physics {
         protected float gravityModifier;
 
         public override void Update(GameTime gt) {
-            if (!Grounded && wasOnGround) {
-                ticksSinceLeavingGround++;
-                if (ticksSinceLeavingGround > inputGracePeriod) {
-                    wasOnGround = false;
-                    ticksSinceLeavingGround = 0;
-                }
-            } else {
-                wasOnGround = Grounded;
-                ticksSinceLeavingGround = 0;
-            }
-
             float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
 
-            float directionalSpeedModifier = 1;
-            if (_velocity.Y > 0) {
-                directionalSpeedModifier = 1.25f; // fall faster
-            } else if (_velocity.Y < 0 && !OnLeftWall && !OnRightWall) {
-                directionalSpeedModifier = .85f; // rise faster
-            }
-
-            _velocity.Y += gravityModifier * GravityConst * directionalSpeedModifier;
+            _velocity.Y += gravityModifier * GravityConst * GetDirectionalSpeedModifier();
             _velocity.Y = MathF.Min(_velocity.Y, MaxFallSpeed);
 
             Position += Velocity * deltaTime;
+        }
+
+        protected virtual float GetDirectionalSpeedModifier() {
+            return 1;
         }
 
         public virtual void SetGravityModifier(float value) {
@@ -102,7 +88,7 @@ namespace MarshmallowAvalanche.Physics {
             return gravityModifier;
         }
 
-        public void ResetCollisionStatus() {
+        public virtual void ResetCollisionStatus() {
             wasOnGround = Grounded;
             wasOnRightWall = OnRightWall;
             wasOnLeftWall = OnLeftWall;

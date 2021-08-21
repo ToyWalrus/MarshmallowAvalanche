@@ -46,10 +46,12 @@ namespace MarshmallowAvalanche {
         }
 
         public void SpawnObject(PhysicsObject newObject) {
-            WorldGridSection section = grid.GetSectionAtWorldPoint(newObject.Position);
-
-            section?.AddObject(newObject);
-            objectSections.Add(newObject, new List<WorldGridSection> { section });
+            List<WorldGridSection> sections = new List<WorldGridSection>();
+            foreach (WorldGridSection section in grid.GetSectionsOverlappedBy(newObject.Bounds)) {
+                section?.AddObject(newObject);
+                sections.Add(section);
+            }            
+            objectSections.Add(newObject, sections);
         }
 
         public void RemoveObject(PhysicsObject physicsObject) {

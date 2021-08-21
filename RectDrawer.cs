@@ -1,23 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MarshmallowAvalanche.Physics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace MarshmallowAvalanche {
     public class RectDrawer {
-        public Vector2 Size { get; private set; }
+        public PhysicsObject PhysicsObject { get; private set; }
         private Texture2D tex;
+        private bool hasBeenInitialized;
+        private Color color;
 
-        public RectDrawer(Vector2 dimensions) {
-            this.Size = dimensions;
+        private Vector2 size;
+
+        public RectDrawer(PhysicsObject obj) {
+            PhysicsObject = obj;
+            hasBeenInitialized = false;
+            color = Color.White;
+        }
+
+        public RectDrawer(PhysicsObject obj, Color color) : this(obj) {
+            this.color = color;
+        }
+
+        public RectDrawer(Vector2 size, Color color) {
+            this.size = size;
+            this.color = color;
         }
 
         public void Initialize(GraphicsDevice gd) {
-            Initialize(gd, Color.White);
+            if (color != null) {
+                Initialize(gd, color);
+            } else {
+                Initialize(gd, Color.White);
+            }
         }
 
         public void Initialize(GraphicsDevice gd, Color color) {
+            hasBeenInitialized = true;
             tex = new Texture2D(gd, 1, 1);
             SetColor(color);
         }
@@ -27,12 +48,28 @@ namespace MarshmallowAvalanche {
         }
 
         public void SetColor(Color color) {
-            tex.SetData(new Color[] { color });
+            this.color = color;
+            if (hasBeenInitialized) {
+                tex.SetData(new Color[] { color });
+            }
+        }
+
+        public void Draw(SpriteBatch sb) {
+            if (PhysicsObject == null) {
+                throw new Exception("No physics object assigned to this rect drawer!");
+            }
+            sb.Draw(tex, PhysicsObject.Bounds, Color.White);
         }
 
         public void Draw(SpriteBatch sb, Vector2 location) {
-            Rectangle rect = new Rectangle(location.ToPoint(), Size.ToPoint());
-            sb.Draw(tex, rect, Color.White);
+            if (size == null) {
+                if (PhysicsObject == null) {
+                    throw new Exception("No physics object assigned to this rect drawer!");
+                }
+                sb.Draw(tex, new Rectangle(location.ToPoint(), PhysicsObject.Size.ToPoint()), Color.White);
+            } else {
+                sb.Draw(tex, new Rectangle(location.ToPoint(), size.ToPoint()), Color.White);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -12,10 +13,14 @@ namespace MarshmallowAvalanche {
         private SpriteBatch sb;
 
         //private Camera camera;
-        private RectDrawer whiteRectangle;
         private RectDrawer background;
-        private World world;
+        private List<RectDrawer> rectDrawers;
         private Character marshmallow;
+        private World world;
+
+        private BlockSpawner blockSpawner;
+        private const float blockSpawnInterval = 2f;
+        private float blockSpawnTimer = blockSpawnInterval;
 
         public const int DesiredWindowHeight = 800;
         public const int DesiredWindowWidth = 500;
@@ -36,18 +41,22 @@ namespace MarshmallowAvalanche {
             //camera.ResolutionIndependentRenderer.VirtualHeight = DesiredWindowHeight;
             //camera.ResolutionIndependentRenderer.VirtualWidth = DesiredWindowWidth;
 
-            whiteRectangle = new RectDrawer(new Vector2(30, 60));
-            background = new RectDrawer(new Vector2(DesiredWindowWidth, DesiredWindowHeight));
-            marshmallow = new Character(new Vector2(DesiredWindowWidth / 2, DesiredWindowHeight / 1.5f), whiteRectangle.Size);
+            background = new RectDrawer(new Vector2(DesiredWindowWidth, DesiredWindowHeight), Color.CornflowerBlue);
+            marshmallow = new Character(new Vector2(DesiredWindowWidth / 2, DesiredWindowHeight / 1.5f), new Vector2(30, 60));
             marshmallow.SetGravityModifier(5);
+
+            rectDrawers = new List<RectDrawer>();
+            rectDrawers.Add(new RectDrawer(marshmallow));
 
             world = new World(DesiredWindowWidth, DesiredWindowHeight, 5, 12);
             world.SpawnObject(marshmallow);
 
             // add bounds        
-            world.SpawnObject(new StaticObject(new Vector2(-50, DesiredWindowHeight - 5), new Vector2(DesiredWindowWidth + 100, 200)));
-            world.SpawnObject(new StaticObject(new Vector2(-200, -50), new Vector2(205, DesiredWindowHeight + 100)));
-            world.SpawnObject(new StaticObject(new Vector2(DesiredWindowWidth - 5, -50), new Vector2(200, DesiredWindowHeight + 100)));
+            world.SpawnObject(new StaticObject(new Vector2(-50, DesiredWindowHeight), new Vector2(DesiredWindowWidth + 100, 100)));
+            world.SpawnObject(new StaticObject(new Vector2(-100, -50), new Vector2(100, DesiredWindowHeight + 100)));
+            world.SpawnObject(new StaticObject(new Vector2(DesiredWindowWidth, -50), new Vector2(100, DesiredWindowHeight + 100)));
+
+            blockSpawner = new BlockSpawner(new RectF(50, -50, DesiredWindowWidth - 50, 50), new Vector2(100, 100), new Vector2(250, 250));
 
             g.PreferredBackBufferWidth = DesiredWindowWidth;
             g.PreferredBackBufferHeight = DesiredWindowHeight;
@@ -60,16 +69,20 @@ namespace MarshmallowAvalanche {
 
         protected override void LoadContent() {
             sb = new SpriteBatch(GraphicsDevice);
-            whiteRectangle.Initialize(GraphicsDevice);
-            background.Initialize(GraphicsDevice, Color.DeepSkyBlue);
+            background.Initialize(GraphicsDevice);
+            foreach (RectDrawer drawer in rectDrawers) {
+                drawer.Initialize(GraphicsDevice);
+            }
             Logger.InitFont(Content.Load<SpriteFont>("DefaultFont"));
         }
 
         protected override void UnloadContent() {
             base.UnloadContent();
             sb.Dispose();
-            whiteRectangle.Dispose();
             background.Dispose();
+            foreach (RectDrawer drawer in rectDrawers) {
+                drawer.Dispose();
+            }
             Logger.DisposeTexture();
         }
 
@@ -79,6 +92,12 @@ namespace MarshmallowAvalanche {
 
             KeyboardState keyboard = Keyboard.GetState();
             marshmallow.UpdateKeyboardState(keyboard);
+
+            blockSpawnTimer -= (float)gt.ElapsedGameTime.TotalSeconds;
+            if (blockSpawnTimer <= 0) {
+                blockSpawnTimer = blockSpawnInterval;
+                world.SpawnObject(blockSpawner.SpawnBlock());
+            }
 
             if (ShouldUpdate(gt)) {
                 world.Update(gt);
@@ -96,7 +115,7 @@ namespace MarshmallowAvalanche {
 
             // ======== Debug ===========
             //world.DrawGrid(sb, 1f);
-            world.DrawAllSpawnedObjects(sb, Color.Red, (p) => !(p is Character));
+            world.DrawAllSpawnedObjects(sb, Color.Red, (p) => p is FallingBlock);
 
             Color textColor = Color.AntiqueWhite;
             Logger.DrawText(sb, marshmallow.State.ToString(), new Vector2(50, 20), textColor, Vector2.One, false);
@@ -104,14 +123,16 @@ namespace MarshmallowAvalanche {
             Logger.DrawText(sb, $"Position: {marshmallow.Position}", new Vector2(50, 110), textColor, Vector2.One, false);
             // ==========================
 
-            whiteRectangle.Draw(sb, marshmallow.Position);
+            foreach (RectDrawer drawer in rectDrawers) {
+                drawer.Draw(sb);
+            }
 
             sb.End();
 
             base.Draw(gameTime);
         }
 
-        private const float updateInterval = 0.00f;
+        private const float updateInterval = 0.025f;
         private float updateTimer = updateInterval;
         private bool ShouldUpdate(GameTime gt) {
             updateTimer -= (float)gt.ElapsedGameTime.TotalSeconds;
