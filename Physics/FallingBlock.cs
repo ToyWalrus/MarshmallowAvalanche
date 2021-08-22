@@ -12,24 +12,17 @@ namespace MarshmallowAvalanche.Physics {
             protected set;
         }
 
-        public float FallSpeed {
-            get;
-            set;
-        }
-
         public FallingBlock(Vector2 position, Vector2 size, string tag = DefaultTag) : base(position, size) {
-            FallSpeed = 50;
+            MaxFallSpeed = 500;
             Grounded = false;
             Tag = tag;
+            Velocity = new Vector2(0, MaxFallSpeed);
         }
 
         public override void Update(GameTime gt) {
             // Blocks will never move once grounded
             if (Grounded) return;
-
-            _velocity.X = 0;
-            _velocity.Y = FallSpeed * GravityConst;
-            Position += Velocity * (float)gt.ElapsedGameTime.TotalSeconds;
+            base.Update(gt);
         }
 
         public override bool CanCollideWith(PhysicsObject other) {
@@ -45,24 +38,23 @@ namespace MarshmallowAvalanche.Physics {
 
         public override void CheckForCollisionWith(PhysicsObject other) {
             if (other == null || Grounded || !CanCollideWith(other)) return;
+            var otherBounds = other.Bounds;
 
-            if (Bounds.Intersects(other.Bounds, out Vector2 overlap)) {
+            if (Bounds.Intersects(otherBounds, out Vector2 overlap)) {
                 if (other is FallingBlock otherBlock) {
                     bool xIsSmaller = Math.Abs(overlap.X) < Math.Abs(overlap.Y);
                     if (xIsSmaller) {
                         // Blocks will never be moving horizontally so 
                         // this should only ever happen if a block spawns
                         // in another block
-                        if (overlap.X != 0) {
-                            if (overlap.X > 0) {
-                                _position.X = other.Bounds.Left - Size.X;
-                            } else {
-                                _position.X = other.Bounds.Right;
-                            }
+                        if (overlap.X > 0) {
+                            _position.X = MathF.Floor(otherBounds.Left - Size.X);
+                        } else if (overlap.X < 0) {
+                            _position.X = MathF.Floor(otherBounds.Right);
                         }
                     }
                     if (overlap.Y > 0) {
-                        _position.Y = other.Bounds.Top - Size.Y;
+                        _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
 
                         // Ground the block if the other block is grounded
                         if (otherBlock.Grounded) {
@@ -72,7 +64,7 @@ namespace MarshmallowAvalanche.Physics {
                 } else if (other is StaticObject) {
                     if (overlap.Y > 0) {
                         Grounded = true;
-                        _position.Y = other.Bounds.Top - Size.Y;
+                        _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
                         if (_velocity.Y > 0) {
                             _velocity.Y = 0;
                         }

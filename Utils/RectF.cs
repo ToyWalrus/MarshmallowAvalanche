@@ -114,8 +114,6 @@ namespace MarshmallowAvalanche.Utils {
             return a.Intersects(b);
         }
 
-        Rectangle AsRectangle => new Rectangle(Position.ToPoint(), Size.ToPoint());
-
         //
         // Summary:
         //     Creates a new Rect that completely contains two

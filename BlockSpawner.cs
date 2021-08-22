@@ -53,10 +53,16 @@ namespace MarshmallowAvalanche {
         }
         #endregion
 
-        public FallingBlock SpawnBlock(string tag = FallingBlock.DefaultTag) {
+        public FallingBlock SpawnBlock(bool keepSquare = false, string tag = FallingBlock.DefaultTag) {
             Random rand = new Random();
             float blockWidth = (float)rand.NextDouble() * (maxSpawnSize.X - minSpawnSize.X) + minSpawnSize.X;
             float blockHeight = (float)rand.NextDouble() * (maxSpawnSize.Y - minSpawnSize.Y) + minSpawnSize.Y;
+
+            if (keepSquare) {
+                float averageSize = (blockWidth + blockHeight) / 2;
+                blockWidth = averageSize;
+                blockHeight = averageSize;
+            }
 
             float centerX = (float)rand.NextDouble() * SpawnBounds.Size.X + SpawnBounds.Left;
             float centerY = (float)rand.NextDouble() * SpawnBounds.Size.Y + SpawnBounds.Top;
@@ -64,10 +70,10 @@ namespace MarshmallowAvalanche {
 
             return new FallingBlock(position, new Vector2(blockWidth, blockHeight), tag);
         }
-
-        public FallingBlock SpawnBlock(float fallSpeed, string tag = FallingBlock.DefaultTag) {
-            FallingBlock block = SpawnBlock(tag);
-            block.FallSpeed = fallSpeed;
+        
+        public FallingBlock SpawnBlock(float fallSpeed, bool keepSquare = false, string tag = FallingBlock.DefaultTag) {
+            FallingBlock block = SpawnBlock(keepSquare, tag);
+            block.MaxFallSpeed = fallSpeed;
             return block;
         }
     }
