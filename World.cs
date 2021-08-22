@@ -114,9 +114,7 @@ namespace MarshmallowAvalanche {
                 foreach (PhysicsObject obj in section.containedObjects) {
                     if (obj is Character) {
                         Logger.DrawFilledRect(sb, new Rectangle(section.positionX, section.positionY, grid.GridSectionWidth, grid.GridSectionHeight), new Color(0, 255, 0, 150));
-                        //break;
-                    } else if (obj is StaticObject) {
-                        Logger.DrawFilledRect(sb, new Rectangle(section.positionX, section.positionY, grid.GridSectionWidth, grid.GridSectionHeight), new Color(0, 0, 255, 150));
+                        break;
                     }
                 }
             }
@@ -230,13 +228,11 @@ namespace MarshmallowAvalanche {
             GridSectionHeight = world.Height / _rows;
             GridSectionWidth = world.Width / _cols;
 
-            // Start at 0, because we never want the character
-            // jumping off top of screen
-            for (int i = 0; i < _rows + 2; ++i) {
+            for (int i = -1; i < _rows + 1; ++i) {
 
                 // Starting off left side screen and going
                 // off right side of screen
-                for (int j = -1; j < _cols + 1; ++j) {
+                for (int j = -1; j < _cols + 2; ++j) {
 
                     WorldGridSection newSection = new WorldGridSection {
                         id = newGrid.Count,
@@ -245,11 +241,6 @@ namespace MarshmallowAvalanche {
                         positionX = j * GridSectionWidth,
                         positionY = i * GridSectionHeight,
                     };
-
-                    //WorldGridSection oldSection = GetSectionAtGridPoint(j, i);
-                    //if (oldSection != null) {
-                    //    newSection.containedObjects.AddRange(oldSection.containedObjects);
-                    //}
 
                     newGrid.Add(newSection);
                 }

@@ -71,7 +71,7 @@ namespace MarshmallowAvalanche {
         public void UpdateKeyboardState(KeyboardState keyboard) {
             frameInput[(int)Input.Left] = keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A);
             frameInput[(int)Input.Right] = keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D);
-            frameInput[(int)Input.Jump] = keyboard.IsKeyDown(Keys.Space) || keyboard.IsKeyDown(Keys.W) || keyboard.IsKeyDown(Keys.Up);
+            frameInput[(int)Input.Jump] = keyboard.IsKeyDown(Keys.Up) || keyboard.IsKeyDown(Keys.W);
         }
 
         public override void Update(GameTime gt) {
