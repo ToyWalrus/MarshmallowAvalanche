@@ -13,9 +13,8 @@ namespace MarshmallowAvalanche {
             Jump = 2,
         }
 
-        private Dictionary<CharacterInput, ICollection<Keys>> inputKeyMap;
-
         private float overriddenGravityModifier;
+        private readonly Dictionary<CharacterInput, ICollection<Keys>> inputKeyMap;
 
         // The time before the input kicks in again to
         // steer back to wall
@@ -30,7 +29,7 @@ namespace MarshmallowAvalanche {
 
         public bool doUpdate = true;
 
-        public Character(Vector2 position, Vector2 size) : base(position, size) {
+        public Character(Vector2 size) : base(size) {
             JumpSpeed = 500;
             GroundMoveSpeed = 550;
             AirMoveSpeed = GroundMoveSpeed * .8f;
@@ -59,6 +58,11 @@ namespace MarshmallowAvalanche {
                 }
                 return CharacterState.Idle;
             }
+        }
+
+        public override void OnAddedToEntity() {
+            base.OnAddedToEntity();
+            Collider.PhysicsLayer = (int)PhysicsLayers.Marshmallow;
         }
 
         public override float GetGravityModifier() {

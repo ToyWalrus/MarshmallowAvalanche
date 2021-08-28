@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
-using MarshmallowAvalanche.Utils;
 using Nez;
 
 //https://gamedevelopment.tutsplus.com/tutorials/basic-2d-platformer-physics-part-2--cms-25922
@@ -9,7 +8,7 @@ namespace MarshmallowAvalanche.Physics {
     public abstract class MovingObject : PhysicsObject {
         public const float GravityConst = 9.8f;
 
-        public MovingObject(Vector2 position, Vector2 size) : base(size) {
+        public MovingObject(Vector2 size) : base(size) {
             gravityModifier = 1;
             MaxFallSpeed = 1000;
             TouchingTopEdge = false;
@@ -44,7 +43,7 @@ namespace MarshmallowAvalanche.Physics {
 
         protected Mover _mover;
 
-        public float MaxFallSpeed { get; set; }
+        public virtual float MaxFallSpeed { get; set; }
 
         protected bool wasOnRightWall = false;
         public bool OnRightWall { get; protected set; }
@@ -70,7 +69,7 @@ namespace MarshmallowAvalanche.Physics {
             Vector2 deltaMovement = _velocity * Time.DeltaTime;
 
             if (_mover.Move(deltaMovement, out _collisionResult)) {
-                AdjustForCollisionWith(_collisionResult.Collider.GetComponent<PhysicsObject>());
+                SetTouchingBorder(_collisionResult.Collider.GetComponent<PhysicsObject>());
             }
         }
 
@@ -98,8 +97,8 @@ namespace MarshmallowAvalanche.Physics {
             TouchingTopEdge = false;
         }
 
-        public void AdjustForCollisionWith(PhysicsObject other) {
-            if (other == null || !CanCollideWith(other)) return;
+        public void SetTouchingBorder(PhysicsObject other) {
+            if (other == null) return;
             Vector2 overlap = _collisionResult.MinimumTranslationVector;
 
             if (overlap.X < 0) {
