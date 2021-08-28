@@ -137,6 +137,7 @@ namespace MarshmallowAvalanche {
         }
 
         private void CheckForWallInteraction() {
+            // Don't allow sliding or wall jumping from static objects
             bool isSliding = State == CharacterState.Sliding && 
                 !Flags.IsFlagSet(
                     _collisionData.Collider?.PhysicsLayer ?? _previousFrameCollisionData.Collider.PhysicsLayer, 

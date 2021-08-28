@@ -98,7 +98,7 @@ namespace MarshmallowAvalanche.Physics {
             TouchingTopEdge = false;
         }
 
-        public void SetTouchingBorder(PhysicsObject other) {
+        public virtual void SetTouchingBorder(PhysicsObject other) {
             if (other == null) return;
             Vector2 overlap = _collisionData.MinimumTranslationVector;
 

@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using Nez;
+﻿using Nez;
 
 namespace MarshmallowAvalanche {
     public class GameRoot : Core {

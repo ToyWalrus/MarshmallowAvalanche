@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Nez;
 
 namespace MarshmallowAvalanche {
@@ -48,6 +46,5 @@ namespace MarshmallowAvalanche {
             Entity.Position += delta;
             prevCamPosition = camera.Position;
         }
-
     }
 }

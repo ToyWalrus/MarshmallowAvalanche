@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using MarshmallowAvalanche.Physics;
+﻿using MarshmallowAvalanche.Physics;
 using Microsoft.Xna.Framework;
 using Nez;
 
@@ -41,11 +39,6 @@ namespace MarshmallowAvalanche {
             MoveWithCamera spawnerMover = blockSpawner.AddComponent<MoveWithCamera>();
             spawnerMover.SetFollowOnXAxis(false);
 
-            //var spawnerRenderer = blockSpawner.AddComponent<PrototypeSpriteRenderer>();
-            //spawnerRenderer.Color = Color.Yellow;
-            //spawnerRenderer.SetHeight(blockSpawner.Size.Y);
-            //spawnerRenderer.SetWidth(blockSpawner.Size.X);
-
             Camera.Entity.AddComponent(new FollowCamera(marshmallow.Entity));
             CameraBounds camBounds = Camera.Entity.AddComponent(new CameraBounds(GameRoot.DesiredWindowHeight, -sceneWidth / 2, sceneWidth / 2));
 
@@ -66,7 +59,7 @@ namespace MarshmallowAvalanche {
                 camBounds.MaxX - camBounds.MinX + camBounds.ExtraCamPadding.X * 2,
                 boundThickness
                 ),
-            "bot"
+            "bot-wall"
             );
 
             var leftWall = CreateWall(new RectangleF(
@@ -75,7 +68,7 @@ namespace MarshmallowAvalanche {
                 boundThickness,
                 camBounds.MinY * 1.5f
                 ),
-            "left"
+            "left-wall"
             );
             leftWall.AddComponent<MoveWithCamera>().SetFollowOnXAxis(false);
 
@@ -85,7 +78,7 @@ namespace MarshmallowAvalanche {
                 boundThickness,
                 camBounds.MinY * 1.5f
                 ),
-            "right"
+            "right-wall"
             );
             rightWall.AddComponent<MoveWithCamera>().SetFollowOnXAxis(false);
         }
@@ -106,7 +99,7 @@ namespace MarshmallowAvalanche {
             if (blockSpawnTimer < 0) {
                 blockSpawnTimer = blockSpawnInterval;
                 FallingBlock block = blockSpawner.SpawnBlock(250);
-                block.SetBlockColor(GetRandomColor());
+                block?.SetBlockColor(GetRandomColor());
             }
         }
 

@@ -61,5 +61,18 @@ namespace MarshmallowAvalanche.Physics {
         }
 
         public override void ResetCollisionStatus() { }
+
+        public override void SetTouchingBorder(PhysicsObject other) {
+            base.SetTouchingBorder(other);
+
+            if (Grounded) {
+                // We only want to set this block to grounded if
+                // it is on a static object or another block that
+                // is also grounded
+                if (other is FallingBlock otherBlock) {
+                    Grounded = otherBlock.Grounded;
+                }
+            }
+        }
     }
 }
