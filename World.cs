@@ -50,7 +50,7 @@ namespace MarshmallowAvalanche {
             foreach (WorldGridSection section in grid.GetSectionsOverlappedBy(newObject.Bounds)) {
                 section?.AddObject(newObject);
                 sections.Add(section);
-            }            
+            }
             objectSections.Add(newObject, sections);
         }
 
@@ -71,23 +71,23 @@ namespace MarshmallowAvalanche {
         }
 
         private void UpdateCollisionDataFor(PhysicsObject obj) {
-            if (obj.IsStatic && !(obj as StaticObject).hasSetCollisionBoundsInWorld) {
-                UpdateContainingSection(obj);
-                (obj as StaticObject).hasSetCollisionBoundsInWorld = true;
-            } else if (obj.IsDynamic && (obj as MovingObject).Velocity.Length() > 0) {
-                UpdateContainingSection(obj);
-                (obj as MovingObject).ResetCollisionStatus();
-            }
+            //if (obj.IsStatic && !(obj as StaticObject).hasSetCollisionBoundsInWorld) {
+            //    UpdateContainingSection(obj);
+            //    (obj as StaticObject).hasSetCollisionBoundsInWorld = true;
+            //} else if (obj.IsDynamic && (obj as MovingObject).Velocity.Length() > 0) {
+            //    UpdateContainingSection(obj);
+            //    (obj as MovingObject).ResetCollisionStatus();
+            //}
 
-            foreach (WorldGridSection section in objectSections[obj]) {
-                if (section == null) continue;
-                List<PhysicsObject> objectsInSection = section.containedObjects;
-                for (int a = 0; a < objectsInSection.Count; ++a) {
-                    PhysicsObject other = objectsInSection[a];
-                    if (obj == other) continue;
-                    obj.CheckForCollisionWith(other);
-                }
-            }
+            //foreach (WorldGridSection section in objectSections[obj]) {
+            //    if (section == null) continue;
+            //    List<PhysicsObject> objectsInSection = section.containedObjects;
+            //    for (int a = 0; a < objectsInSection.Count; ++a) {
+            //        PhysicsObject other = objectsInSection[a];
+            //        if (obj == other) continue;
+            //        obj.CheckForCollisionWith(other);
+            //    }
+            //}
         }
 
         private void UpdateContainingSection(PhysicsObject obj) {
@@ -120,14 +120,18 @@ namespace MarshmallowAvalanche {
             }
         }
 
-        public void DrawAllSpawnedObjects(SpriteBatch sb) {
-            DrawAllSpawnedObjects(sb, Color.OrangeRed, (p) => true);
+        public void DrawAllSpawnedObjects(SpriteBatch sb, bool filled = true) {
+            DrawAllSpawnedObjects(sb, Color.OrangeRed, (p) => true, filled);
         }
 
-        public void DrawAllSpawnedObjects(SpriteBatch sb, Color color, Predicate<PhysicsObject> checkToDraw) {
+        public void DrawAllSpawnedObjects(SpriteBatch sb, Color color, Predicate<PhysicsObject> checkToDraw, bool filled = true) {
             foreach (PhysicsObject obj in objectSections.Keys) {
                 if (checkToDraw(obj)) {
-                    Logger.DrawFilledRect(sb, obj.Bounds, color);
+                    if (filled) {
+                        Logger.DrawFilledRect(sb, obj.Bounds, color);
+                    } else {
+                        Logger.DrawOutlineRect(sb, obj.Bounds, color);
+                    }
                 }
             }
         }

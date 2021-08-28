@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using MarshmallowAvalanche.Utils;
+using Nez;
 
 //https://gamedevelopment.tutsplus.com/tutorials/basic-2d-platformer-physics-part-2--cms-25922
 namespace MarshmallowAvalanche.Physics {
@@ -32,23 +33,10 @@ namespace MarshmallowAvalanche.Physics {
         /// </summary>
         public Vector2 Velocity {
             get => _velocity;
-            set {
-                PreviousVelocity = _velocity;
-                _velocity = value;
-            }
+            set => _velocity = value;
         }
         protected Vector2 _velocity;
 
-        public override Vector2 Position {
-            get => _position;
-            set {
-                PreviousPosition = _position;
-                _position = value;
-            }
-        }
-
-        public Vector2 PreviousVelocity { get; protected set; }
-        public Vector2 PreviousPosition { get; protected set; }
         public float MaxFallSpeed { get; set; }
 
         protected bool wasOnRightWall = false;
@@ -68,12 +56,16 @@ namespace MarshmallowAvalanche.Physics {
         protected float gravityModifier;
 
         public override void Update(GameTime gt) {
-            float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
-
             _velocity.Y += gravityModifier * GravityConst * GetDirectionalSpeedModifier();
             _velocity.Y = MathF.Min(_velocity.Y, MaxFallSpeed);
+            Vector2 deltaMovement = _velocity * Time.DeltaTime;
 
-            Position += Velocity * deltaTime;
+            if (Collider.CollidesWithAny(ref deltaMovement, out CollisionResult result)) {
+                Debug.Log("Collision result: {0}", result);
+            }
+
+            Position += deltaMovement;
+            Velocity = deltaMovement / Time.DeltaTime;
         }
 
         protected virtual float GetDirectionalSpeedModifier() {
@@ -100,47 +92,50 @@ namespace MarshmallowAvalanche.Physics {
             TouchingTopEdge = false;
         }
 
-        public override void CheckForCollisionWith(PhysicsObject other) {
-            if (other == null || !CanCollideWith(other)) return;
-            RectF otherBounds = other.Bounds;
+        //public override void CheckForCollisionWith(PhysicsObject other) {
+        //    if (other == null || !CanCollideWith(other)) return;
 
-            if (Bounds.Intersects(otherBounds, out Vector2 overlap)) {
+        //    RectF otherBounds = other.Bounds;
+        //    Vector2 _position = Position;
 
-                // TODO: add mass? the lesser mass object moves?
-                // We only care about the lesser overlap amount
-                bool xIsSmaller = Math.Abs(overlap.X) < Math.Abs(overlap.Y);
-                if (xIsSmaller) {
-                    if (overlap.X < 0) {
-                        OnLeftWall = true;
-                        _position.X = otherBounds.Right;
-                        if (_velocity.X < 0) {
-                            _velocity.X = 0;
-                        }
-                    }
-                    if (overlap.X > 0) {
-                        OnRightWall = true;
-                        _position.X = otherBounds.Left - Size.X;
-                        if (_velocity.X > 0) {
-                            _velocity.X = 0;
-                        }
-                    }
-                } else {
-                    if (overlap.Y < 0) {
-                        TouchingTopEdge = true;
-                        _position.Y = otherBounds.Bottom;
-                        if (_velocity.Y < 0) {
-                            _velocity.Y = 0;
-                        }
-                    }
-                    if (overlap.Y > 0) {
-                        Grounded = true;
-                        _position.Y = otherBounds.Top - Size.Y;
-                        if (_velocity.Y > 0) {
-                            _velocity.Y = 0;
-                        }
-                    }
-                }
-            }
-        }
+        //    if (Bounds.Intersects(otherBounds, out Vector2 overlap)) {
+
+        //        // TODO: add mass? the lesser mass object moves?
+        //        // We only care about the lesser overlap amount
+        //        bool xIsSmaller = Math.Abs(overlap.X) < Math.Abs(overlap.Y);
+        //        if (xIsSmaller) {
+        //            if (overlap.X < 0) {
+        //                OnLeftWall = true;
+        //                _position.X = otherBounds.Right;
+        //                if (_velocity.X < 0) {
+        //                    _velocity.X = 0;
+        //                }
+        //            }
+        //            if (overlap.X > 0) {
+        //                OnRightWall = true;
+        //                _position.X = otherBounds.Left - Size.X;
+        //                if (_velocity.X > 0) {
+        //                    _velocity.X = 0;
+        //                }
+        //            }
+        //        } else {
+        //            if (overlap.Y < 0) {
+        //                TouchingTopEdge = true;
+        //                _position.Y = otherBounds.Bottom;
+        //                if (_velocity.Y < 0) {
+        //                    _velocity.Y = 0;
+        //                }
+        //            }
+        //            if (overlap.Y > 0) {
+        //                Grounded = true;
+        //                _position.Y = otherBounds.Top - Size.Y;
+        //                if (_velocity.Y > 0) {
+        //                    _velocity.Y = 0;
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+    
     }
 }

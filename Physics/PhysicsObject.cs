@@ -1,39 +1,25 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using MarshmallowAvalanche.Utils;
+using Nez;
 
 namespace MarshmallowAvalanche.Physics {
-    public abstract class PhysicsObject {
+    public abstract class PhysicsObject : Entity {
         public bool IsStatic => this is StaticObject;
         public bool IsDynamic => this is MovingObject;
 
-        protected Vector2 _position;
-        public virtual Vector2 Position {
-            get => _position;
-            set => _position = value;
-        }
-
-        protected Vector2 _size;
-        public virtual Vector2 Size {
-            get => _size;
-            set => _size = value;
-        }
-
-        public abstract string Tag {
+        public Vector2 Size => Collider.Bounds.Size;
+        public RectangleF Bounds => Collider.Bounds;
+        public BoxCollider Collider {
             get;
             protected set;
         }
 
-        public RectF Bounds => new RectF(Position, Size);
-
         public PhysicsObject(Vector2 position, Vector2 size) {
-            _position = position;
-            _size = size;
+            Collider = AddComponent(new BoxCollider(position.X, position.Y, size.X, size.Y));
         }
 
         public PhysicsObject(Rectangle bounds) {
-            _position = bounds.Location.ToVector2();
-            _size = bounds.Size.ToVector2();
+            Collider = AddComponent(new BoxCollider(bounds));
         }
 
         public abstract void Update(GameTime gt);
@@ -41,7 +27,5 @@ namespace MarshmallowAvalanche.Physics {
         public virtual bool CanCollideWith(PhysicsObject other) {
             return true;
         }
-
-        public virtual void CheckForCollisionWith(PhysicsObject other) { }
     }
 }

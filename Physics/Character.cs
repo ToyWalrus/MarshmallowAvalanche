@@ -27,17 +27,11 @@ namespace MarshmallowAvalanche {
         public float AirMoveSpeed { get; set; }
         public float SlideSpeed { get; set; }
 
-        public override string Tag {
-            get;
-            protected set;
-        }
-
-        public Character(Vector2 position, Vector2 size, string tag = "Player") : base(position, size) {
+        public Character(Vector2 position, Vector2 size) : base(position, size) {
             JumpSpeed = 800;
             GroundMoveSpeed = 550;
             AirMoveSpeed = GroundMoveSpeed * .8f;
             SlideSpeed = GroundMoveSpeed / 4;
-            Tag = tag;
 
             frameInput = new bool[Enum.GetValues(typeof(Input)).Length];
             prevFrameInput = new bool[frameInput.Length];
@@ -113,7 +107,7 @@ namespace MarshmallowAvalanche {
             }
 
             float moveSpeed = Grounded ? GroundMoveSpeed : AirMoveSpeed;
-            float delta = moveSpeed * deltaTime * 100;
+            float delta = moveSpeed * deltaTime + 100;
 
             if (KeyState(Input.Left) == KeyState(Input.Right)) {
                 _velocity.X = ConvergeToZero(_velocity.X, deltaTime, moveSpeed);

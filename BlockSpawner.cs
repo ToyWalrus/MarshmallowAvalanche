@@ -53,7 +53,7 @@ namespace MarshmallowAvalanche {
         }
         #endregion
 
-        public FallingBlock SpawnBlock(bool keepSquare = false, string tag = FallingBlock.DefaultTag) {
+        public FallingBlock SpawnBlock(bool keepSquare = false) {
             Random rand = new Random();
             float blockWidth = (float)rand.NextDouble() * (maxSpawnSize.X - minSpawnSize.X) + minSpawnSize.X;
             float blockHeight = (float)rand.NextDouble() * (maxSpawnSize.Y - minSpawnSize.Y) + minSpawnSize.Y;
@@ -68,11 +68,11 @@ namespace MarshmallowAvalanche {
             float centerY = (float)rand.NextDouble() * SpawnBounds.Size.Y + SpawnBounds.Top;
             Vector2 position = new Vector2(centerX - blockWidth / 2, centerY - blockHeight / 2);
 
-            return new FallingBlock(position, new Vector2(blockWidth, blockHeight), tag);
+            return new FallingBlock(position, new Vector2(blockWidth, blockHeight));
         }
         
-        public FallingBlock SpawnBlock(float fallSpeed, bool keepSquare = false, string tag = FallingBlock.DefaultTag) {
-            FallingBlock block = SpawnBlock(keepSquare, tag);
+        public FallingBlock SpawnBlock(float fallSpeed, bool keepSquare = false) {
+            FallingBlock block = SpawnBlock(keepSquare);
             block.MaxFallSpeed = fallSpeed;
             return block;
         }

@@ -5,17 +5,9 @@ using Microsoft.Xna.Framework;
 
 namespace MarshmallowAvalanche.Physics {
     public class FallingBlock : MovingObject {
-        public const string DefaultTag = "FallingBlock";
-
-        public override string Tag {
-            get;
-            protected set;
-        }
-
-        public FallingBlock(Vector2 position, Vector2 size, string tag = DefaultTag) : base(position, size) {
+        public FallingBlock(Vector2 position, Vector2 size) : base(position, size) {
             MaxFallSpeed = 500;
             Grounded = false;
-            Tag = tag;
             Velocity = new Vector2(0, MaxFallSpeed);
         }
 
@@ -36,41 +28,41 @@ namespace MarshmallowAvalanche.Physics {
         // it won't be altered
         public override void ResetCollisionStatus() { }
 
-        public override void CheckForCollisionWith(PhysicsObject other) {
-            if (other == null || Grounded || !CanCollideWith(other)) return;
-            var otherBounds = other.Bounds;
+        //public override void CheckForCollisionWith(PhysicsObject other) {
+            //if (other == null || Grounded || !CanCollideWith(other)) return;
+            //var otherBounds = other.Bounds;
 
-            if (Bounds.Intersects(otherBounds, out Vector2 overlap)) {
-                if (other is FallingBlock otherBlock) {
-                    bool xIsSmaller = Math.Abs(overlap.X) < Math.Abs(overlap.Y);
-                    if (xIsSmaller) {
-                        // Blocks will never be moving horizontally so 
-                        // this should only ever happen if a block spawns
-                        // in another block
-                        if (overlap.X > 0) {
-                            _position.X = MathF.Floor(otherBounds.Left - Size.X);
-                        } else if (overlap.X < 0) {
-                            _position.X = MathF.Floor(otherBounds.Right);
-                        }
-                    }
-                    if (overlap.Y > 0) {
-                        _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
+            //if (Bounds.Intersects(otherBounds, out Vector2 overlap)) {
+            //    if (other is FallingBlock otherBlock) {
+            //        bool xIsSmaller = Math.Abs(overlap.X) < Math.Abs(overlap.Y);
+            //        if (xIsSmaller) {
+            //            // Blocks will never be moving horizontally so 
+            //            // this should only ever happen if a block spawns
+            //            // in another block
+            //            if (overlap.X > 0) {
+            //                _position.X = MathF.Floor(otherBounds.Left - Size.X);
+            //            } else if (overlap.X < 0) {
+            //                _position.X = MathF.Floor(otherBounds.Right);
+            //            }
+            //        }
+            //        if (overlap.Y > 0) {
+            //            _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
 
-                        // Ground the block if the other block is grounded
-                        if (otherBlock.Grounded) {
-                            Grounded = true;
-                        }
-                    }
-                } else if (other is StaticObject) {
-                    if (overlap.Y > 0) {
-                        Grounded = true;
-                        _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
-                        if (_velocity.Y > 0) {
-                            _velocity.Y = 0;
-                        }
-                    }
-                }
-            }
-        }
+            //            // Ground the block if the other block is grounded
+            //            if (otherBlock.Grounded) {
+            //                Grounded = true;
+            //            }
+            //        }
+            //    } else if (other is StaticObject) {
+            //        if (overlap.Y > 0) {
+            //            Grounded = true;
+            //            _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
+            //            if (_velocity.Y > 0) {
+            //                _velocity.Y = 0;
+            //            }
+            //        }
+            //    }
+            //}
+        //}
     }
 }
