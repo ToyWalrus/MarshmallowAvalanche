@@ -10,6 +10,7 @@ namespace MarshmallowAvalanche {
         private Character marshmallow;
         private float blockSpawnInterval = 1f;
         private float blockSpawnTimer;
+        private float sceneWidth = GameRoot.DesiredWindowWidth * 2;
 
         public MainScene() : base() { blockSpawnTimer = blockSpawnInterval; }
         public MainScene(float blockSpawnInterval) : base() {
@@ -21,9 +22,9 @@ namespace MarshmallowAvalanche {
             base.Initialize();
 
             ClearColor = Color.CornflowerBlue;
-            SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAllPixelPerfect);
+            SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
 
-            marshmallow = CreateEntity("marshmallow", new Vector2(GameRoot.DesiredWindowWidth / 2, GameRoot.DesiredWindowHeight / 2))
+            marshmallow = CreateEntity("marshmallow", new Vector2(0, GameRoot.DesiredWindowHeight - GameRoot.DesiredWindowHeight / 4))
                 .AddComponent(new Character(new Vector2(30, 60)));
             marshmallow.SetGravityModifier(4);
             marshmallow.JumpSpeed = 700;
@@ -33,14 +34,22 @@ namespace MarshmallowAvalanche {
             renderer.SetHeight(60);
             renderer.SetWidth(30);
 
-            blockSpawner = CreateEntity("block-spawner").AddComponent(new BlockSpawner(new RectangleF(0, 0, GameRoot.DesiredWindowWidth, 40), 80, 180));
+            float maxBlockSize = 180;
+            float minBlockSize = 80;
+            blockSpawner = CreateEntity("block-spawner").AddComponent(new BlockSpawner(new Vector2(sceneWidth - maxBlockSize, 40), minBlockSize, maxBlockSize));
+            MoveWithCamera spawnerMover = blockSpawner.AddComponent<MoveWithCamera>();
+            spawnerMover.SetFollowOnXAxis(false);
 
-            var spawnerRenderer = blockSpawner.AddComponent<PrototypeSpriteRenderer>();
-            spawnerRenderer.Color = Color.Yellow;
-            spawnerRenderer.SetHeight(blockSpawner.SpawnBounds.Height);
-            spawnerRenderer.SetWidth(blockSpawner.SpawnBounds.Width);
+            //var spawnerRenderer = blockSpawner.AddComponent<PrototypeSpriteRenderer>();
+            //spawnerRenderer.Color = Color.Yellow;
+            //spawnerRenderer.SetHeight(blockSpawner.Size.Y);
+            //spawnerRenderer.SetWidth(blockSpawner.Size.X);
 
-            SetUpWorldBounds();
+            CameraBounds camBounds = Camera.Entity.AddComponent(new CameraBounds(GameRoot.DesiredWindowHeight, -sceneWidth / 2, sceneWidth / 2));
+            FollowCamera camFollower = Camera.Entity.AddComponent(new FollowCamera(marshmallow.Entity));
+            //camBounds.ExtraCamPadding = new Vector2(30, 40);
+
+            SetUpWorldBounds(camBounds);
         }
 
         public override void Update() {
@@ -49,23 +58,27 @@ namespace MarshmallowAvalanche {
         }
 
 
-        private void SetUpWorldBounds() {
+        private void SetUpWorldBounds(CameraBounds camBounds) {
             int boundThickness = 10;
-            //CreateWall(new Rectangle(-boundThickness, -boundThickness, boundThickness, GameRoot.DesiredWindowHeight + boundThickness * 2), "left");
-            //CreateWall(new Rectangle(GameRoot.DesiredWindowWidth, -boundThickness, boundThickness, GameRoot.DesiredWindowHeight + boundThickness * 2), "right");
-            CreateWall(new Rectangle(-GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, GameRoot.DesiredWindowWidth * 3, boundThickness), "bot");
+            CreateWall(new RectangleF(camBounds.MinX - camBounds.ExtraCamPadding.X - boundThickness, -camBounds.MinY, boundThickness, camBounds.MinY * 2), "left");
+            CreateWall(new RectangleF(camBounds.MaxX + camBounds.ExtraCamPadding.X, -camBounds.MinY, boundThickness, camBounds.MinY * 2), "right");
+            CreateWall(new RectangleF(camBounds.MinX - camBounds.ExtraCamPadding.X, camBounds.MinY + camBounds.ExtraCamPadding.Y, camBounds.MaxX - camBounds.MinX + camBounds.ExtraCamPadding.X * 2, boundThickness), "bot");
         }
 
-        private void CreateWall(Rectangle rect, string name) {
-            var wall = CreateEntity(name, rect.Center.ToVector2());
-            wall.AddComponent(new StaticObject(rect.Size.ToVector2()));
+        private void CreateWall(RectangleF rect, string name) {
+            var wall = CreateEntity(name, rect.Center);
+            wall.AddComponent(new StaticObject(rect.Size));
+
+            var renderer = wall.AddComponent<PrototypeSpriteRenderer>();
+            renderer.SetWidth(rect.Width);
+            renderer.SetHeight(rect.Height);
         }
 
         private void BlockSpawnerTick() {
             blockSpawnTimer -= Time.DeltaTime;
             if (blockSpawnTimer < 0) {
                 blockSpawnTimer = blockSpawnInterval;
-                FallingBlock block = blockSpawner.SpawnBlock(200);
+                FallingBlock block = blockSpawner.SpawnBlock(250);
                 block.SetBlockColor(GetRandomColor());
             }
         }

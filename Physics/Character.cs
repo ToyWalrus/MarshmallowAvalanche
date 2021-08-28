@@ -79,18 +79,20 @@ namespace MarshmallowAvalanche {
             UpdateTimers();
             UpdateFromInput();
 
-            //if (!Grounded && wasOnGround) {
-            //    ticksSinceLeavingGround++;
-            //    if (ticksSinceLeavingGround > inputGracePeriod) {
-            //        wasOnGround = false;
-            //        ticksSinceLeavingGround = 0;
-            //    }
-            //} else {
-            //    wasOnGround = Grounded;
-            //    ticksSinceLeavingGround = 0;
-            //}
+            if (!Grounded && wasOnGround) {
+                ticksSinceLeavingGround++;
+                if (ticksSinceLeavingGround > inputGracePeriod) {
+                    wasOnGround = false;
+                    ticksSinceLeavingGround = 0;
+                }
+            } else {
+                wasOnGround = Grounded;
+                ticksSinceLeavingGround = 0;
+            }
 
             base.Update();
+
+            StickToFallingBlock();
         }
 
         protected override float GetDirectionalSpeedModifier() {
@@ -106,7 +108,7 @@ namespace MarshmallowAvalanche {
         private void UpdateFromInput() {
             float deltaTime = Time.DeltaTime;
 
-            if (KeyPressed(CharacterInput.Jump) && Grounded) {
+            if (KeyPressed(CharacterInput.Jump) && (Grounded || wasOnGround)) {
                 _velocity.Y = -JumpSpeed;
             } else if (KeyReleased(CharacterInput.Jump) && _velocity.Y < 0) {
                 _velocity.Y /= 2;
@@ -157,6 +159,15 @@ namespace MarshmallowAvalanche {
                     overriddenGravityModifier = 0;
                 } else {
                     overriddenGravityModifier = float.NaN;
+                }
+            }
+        }
+
+        private void StickToFallingBlock() {
+            if (Grounded) {
+                FallingBlock block = _collisionResult.Collider?.GetComponent<FallingBlock>();
+                if (block != null) {
+                    _velocity.Y = block.Velocity.Y;
                 }
             }
         }
