@@ -6,6 +6,7 @@ using Nez.Textures;
 namespace MarshmallowAvalanche.Physics {
     public class FallingBlock : MovingObject {
         private SpriteRenderer sr;
+        private Color savedColor;
 
         public override float MaxFallSpeed {
             get => base.MaxFallSpeed;
@@ -31,20 +32,31 @@ namespace MarshmallowAvalanche.Physics {
                 sr = Entity.AddComponent<SpriteRenderer>();
             }
             sr.Sprite = new Sprite(Entity.Scene.Content.LoadTexture("FallingBlock"));
-            //sr.Sprite.
+
+            Rectangle spriteBounds = sr.Sprite.Texture2D.Bounds;
+            float scale = Bounds.Width / spriteBounds.Width;
+
+            Collider.SetSize(spriteBounds.Width, spriteBounds.Height);
+            sr.Transform.SetScale(scale);
+
+            if (savedColor != null) {
+                sr.Color = savedColor;
+            }
         }
 
         public void SetBlockColor(Color color) {
-            if (sr == null) {
-                Debug.Error("Cannot set color of block if it has not yet been added to entity");
-                return;
+            savedColor = color;
+            if (sr != null) {
+                sr.SetColor(color);
             }
-            sr.SetColor(color);
         }
 
         public override void Update() {
             // Blocks will never move once grounded
-            if (Grounded) return;
+            if (Grounded) {
+                SetEnabled(false);
+                return;
+            }
             base.Update();
         }
 

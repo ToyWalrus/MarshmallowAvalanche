@@ -11,18 +11,18 @@ namespace MarshmallowAvalanche {
                 _spawnBounds = value;
             }
         }
-        private Vector2 minSpawnSize;
-        private Vector2 maxSpawnSize;
+        private float minSpawnSize;
+        private float maxSpawnSize;
 
         private int blockSpawnedIdCounter = 0;
 
-        public BlockSpawner(RectangleF spawnBounds, Vector2 minSpawnSize, Vector2 maxSpawnSize) {
+        public BlockSpawner(RectangleF spawnBounds, float minSpawnSize, float maxSpawnSize) {
             SpawnBounds = spawnBounds;
             this.minSpawnSize = minSpawnSize;
             this.maxSpawnSize = maxSpawnSize;
         }
 
-        public BlockSpawner(Vector2 position, Vector2 size, Vector2 minSpawnSize, Vector2 maxSpawnSize) {
+        public BlockSpawner(Vector2 position, Vector2 size, float minSpawnSize, float maxSpawnSize) {
             SpawnBounds = new RectangleF(position, size);
             this.minSpawnSize = minSpawnSize;
             this.maxSpawnSize = maxSpawnSize;
@@ -52,32 +52,25 @@ namespace MarshmallowAvalanche {
             SpawnBounds = newBounds;
         }
 
-        public void SetMinSpawnSize(Vector2 size) {
+        public void SetMinSpawnSize(float size) {
             minSpawnSize = size;
         }
 
-        public void SetMaxSpawnSize(Vector2 size) {
+        public void SetMaxSpawnSize(float size) {
             maxSpawnSize = size;
         }
         #endregion
 
-        public FallingBlock SpawnBlock(bool keepSquare = false) {
+        public FallingBlock SpawnBlock() {
             System.Random rand = new System.Random();
-            float blockWidth = (float)rand.NextDouble() * (maxSpawnSize.X - minSpawnSize.X) + minSpawnSize.X;
-            float blockHeight = (float)rand.NextDouble() * (maxSpawnSize.Y - minSpawnSize.Y) + minSpawnSize.Y;
-
-            if (keepSquare) {
-                float averageSize = (blockWidth + blockHeight) / 2;
-                blockWidth = averageSize;
-                blockHeight = averageSize;
-            }
-
+            float size = (float)rand.NextDouble() * (maxSpawnSize - minSpawnSize) + minSpawnSize;
             float centerX = (float)rand.NextDouble() * SpawnBounds.Size.X + SpawnBounds.Left;
             float centerY = (float)rand.NextDouble() * SpawnBounds.Size.Y + SpawnBounds.Top;
-            Vector2 position = new Vector2(centerX - blockWidth / 2, centerY - blockHeight / 2);
+
+            Vector2 position = new Vector2(centerX - size / 2, centerY - size / 2);
 
             FallingBlock block = Entity.Scene.CreateEntity("falling-block-" + blockSpawnedIdCounter++)
-                .AddComponent(new FallingBlock(new Vector2(blockWidth, blockHeight)));
+                .AddComponent(new FallingBlock(new Vector2(size, size)));
             block.Transform.SetPosition(position);
 
             return block;
@@ -90,8 +83,8 @@ namespace MarshmallowAvalanche {
         /// <param name="fallSpeed"></param>
         /// <param name="keepSquare"></param>
         /// <returns></returns>
-        public FallingBlock SpawnBlock(float fallSpeed, bool keepSquare = false) {
-            FallingBlock block = SpawnBlock(keepSquare);
+        public FallingBlock SpawnBlock(float fallSpeed) {
+            FallingBlock block = SpawnBlock();
             block.MaxFallSpeed = fallSpeed;
             return block;
         }

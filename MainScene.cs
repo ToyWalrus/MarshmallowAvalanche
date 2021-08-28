@@ -11,9 +11,7 @@ namespace MarshmallowAvalanche {
         private float blockSpawnInterval = 1f;
         private float blockSpawnTimer;
 
-        public MainScene() : base() {
-            blockSpawnTimer = blockSpawnInterval;
-        }
+        public MainScene() : base() { blockSpawnTimer = blockSpawnInterval; }
         public MainScene(float blockSpawnInterval) : base() {
             this.blockSpawnInterval = blockSpawnInterval;
             blockSpawnTimer = blockSpawnInterval;
@@ -22,33 +20,40 @@ namespace MarshmallowAvalanche {
         public override void Initialize() {
             base.Initialize();
 
-            ClearColor = Color.Aqua;
+            ClearColor = Color.CornflowerBlue;
             SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAllPixelPerfect);
 
-            var playerEntity = CreateEntity("player", new Vector2(GameRoot.DesiredWindowWidth / 2, GameRoot.DesiredWindowHeight / 2));
-            var renderer = playerEntity.AddComponent<PrototypeSpriteRenderer>();
+            marshmallow = CreateEntity("marshmallow", new Vector2(GameRoot.DesiredWindowWidth / 2, GameRoot.DesiredWindowHeight / 2))
+                .AddComponent(new Character(new Vector2(30, 60)));
+            marshmallow.SetGravityModifier(4);
+            marshmallow.JumpSpeed = 700;
+
+            var renderer = marshmallow.AddComponent<PrototypeSpriteRenderer>();
             renderer.Color = Color.White;
             renderer.SetHeight(60);
             renderer.SetWidth(30);
 
-            marshmallow = playerEntity.AddComponent(new Character(new Vector2(30, 60)));
-            marshmallow.SetGravityModifier(4);
-            marshmallow.JumpSpeed = 700;
+            blockSpawner = CreateEntity("block-spawner").AddComponent(new BlockSpawner(new RectangleF(0, 0, GameRoot.DesiredWindowWidth, 40), 80, 180));
+
+            var spawnerRenderer = blockSpawner.AddComponent<PrototypeSpriteRenderer>();
+            spawnerRenderer.Color = Color.Yellow;
+            spawnerRenderer.SetHeight(blockSpawner.SpawnBounds.Height);
+            spawnerRenderer.SetWidth(blockSpawner.SpawnBounds.Width);
 
             SetUpWorldBounds();
-
-            blockSpawner = CreateEntity("block-spawner").AddComponent(new BlockSpawner(
-                new RectangleF(GameRoot.DesiredWindowWidth / 2, GameRoot.DesiredWindowHeight / 2, GameRoot.DesiredWindowWidth, 40),
-                new Vector2(80, 80),
-                new Vector2(170, 170)
-                ));
         }
+
+        public override void Update() {
+            base.Update();
+            BlockSpawnerTick();
+        }
+
 
         private void SetUpWorldBounds() {
             int boundThickness = 10;
-            CreateWall(new Rectangle(-boundThickness, -boundThickness, boundThickness, GameRoot.DesiredWindowHeight + boundThickness * 2), "left");
-            CreateWall(new Rectangle(GameRoot.DesiredWindowWidth, -boundThickness, boundThickness, GameRoot.DesiredWindowHeight + boundThickness * 2), "right");
-            CreateWall(new Rectangle(-boundThickness, GameRoot.DesiredWindowHeight, GameRoot.DesiredWindowWidth + boundThickness * 2, boundThickness), "bot");
+            //CreateWall(new Rectangle(-boundThickness, -boundThickness, boundThickness, GameRoot.DesiredWindowHeight + boundThickness * 2), "left");
+            //CreateWall(new Rectangle(GameRoot.DesiredWindowWidth, -boundThickness, boundThickness, GameRoot.DesiredWindowHeight + boundThickness * 2), "right");
+            CreateWall(new Rectangle(-GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, GameRoot.DesiredWindowWidth * 3, boundThickness), "bot");
         }
 
         private void CreateWall(Rectangle rect, string name) {
@@ -56,18 +61,11 @@ namespace MarshmallowAvalanche {
             wall.AddComponent(new StaticObject(rect.Size.ToVector2()));
         }
 
-        public override void Update() {
-            base.Update();
-            BlockSpawnerTick();
-
-            Debug.DrawText(marshmallow.Transform.Position.ToString());
-        }
-
         private void BlockSpawnerTick() {
             blockSpawnTimer -= Time.DeltaTime;
             if (blockSpawnTimer < 0) {
                 blockSpawnTimer = blockSpawnInterval;
-                FallingBlock block = blockSpawner.SpawnBlock(200, true);
+                FallingBlock block = blockSpawner.SpawnBlock(200);
                 block.SetBlockColor(GetRandomColor());
             }
         }
