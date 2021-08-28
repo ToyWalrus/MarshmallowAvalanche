@@ -24,8 +24,9 @@ namespace MarshmallowAvalanche {
             ClearColor = Color.CornflowerBlue;
             SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
 
-            marshmallow = CreateEntity("marshmallow", new Vector2(0, GameRoot.DesiredWindowHeight - GameRoot.DesiredWindowHeight / 4))
-                .AddComponent(new Character(new Vector2(30, 60)));
+            Vector2 marshmallowSize = new Vector2(30, 60);
+            marshmallow = CreateEntity("marshmallow", new Vector2(0, GameRoot.DesiredWindowHeight - marshmallowSize.Y * 1.5f))
+                .AddComponent(new Character(marshmallowSize));
             marshmallow.SetGravityModifier(4);
             marshmallow.JumpSpeed = 700;
 
@@ -36,7 +37,7 @@ namespace MarshmallowAvalanche {
 
             float maxBlockSize = 180;
             float minBlockSize = 80;
-            blockSpawner = CreateEntity("block-spawner").AddComponent(new BlockSpawner(new Vector2(sceneWidth - maxBlockSize, 40), minBlockSize, maxBlockSize));
+            blockSpawner = CreateEntity("block-spawner").AddComponent(new BlockSpawner(new Vector2(sceneWidth - maxBlockSize * 2, 40), minBlockSize, maxBlockSize));
             MoveWithCamera spawnerMover = blockSpawner.AddComponent<MoveWithCamera>();
             spawnerMover.SetFollowOnXAxis(false);
 
@@ -45,9 +46,8 @@ namespace MarshmallowAvalanche {
             //spawnerRenderer.SetHeight(blockSpawner.Size.Y);
             //spawnerRenderer.SetWidth(blockSpawner.Size.X);
 
+            Camera.Entity.AddComponent(new FollowCamera(marshmallow.Entity));
             CameraBounds camBounds = Camera.Entity.AddComponent(new CameraBounds(GameRoot.DesiredWindowHeight, -sceneWidth / 2, sceneWidth / 2));
-            FollowCamera camFollower = Camera.Entity.AddComponent(new FollowCamera(marshmallow.Entity));
-            //camBounds.ExtraCamPadding = new Vector2(30, 40);
 
             SetUpWorldBounds(camBounds);
         }
@@ -60,18 +60,45 @@ namespace MarshmallowAvalanche {
 
         private void SetUpWorldBounds(CameraBounds camBounds) {
             int boundThickness = 10;
-            CreateWall(new RectangleF(camBounds.MinX - camBounds.ExtraCamPadding.X - boundThickness, -camBounds.MinY, boundThickness, camBounds.MinY * 2), "left");
-            CreateWall(new RectangleF(camBounds.MaxX + camBounds.ExtraCamPadding.X, -camBounds.MinY, boundThickness, camBounds.MinY * 2), "right");
-            CreateWall(new RectangleF(camBounds.MinX - camBounds.ExtraCamPadding.X, camBounds.MinY + camBounds.ExtraCamPadding.Y, camBounds.MaxX - camBounds.MinX + camBounds.ExtraCamPadding.X * 2, boundThickness), "bot");
+            CreateWall(new RectangleF(
+                camBounds.MinX - camBounds.ExtraCamPadding.X,
+                camBounds.MinY + camBounds.ExtraCamPadding.Y,
+                camBounds.MaxX - camBounds.MinX + camBounds.ExtraCamPadding.X * 2,
+                boundThickness
+                ),
+            "bot"
+            );
+
+            var leftWall = CreateWall(new RectangleF(
+                camBounds.MinX - camBounds.ExtraCamPadding.X - boundThickness,
+                -camBounds.MinY / 2,
+                boundThickness,
+                camBounds.MinY * 1.5f
+                ),
+            "left"
+            );
+            leftWall.AddComponent<MoveWithCamera>().SetFollowOnXAxis(false);
+
+            var rightWall = CreateWall(new RectangleF(
+                camBounds.MaxX + camBounds.ExtraCamPadding.X,
+                -camBounds.MinY / 2,
+                boundThickness,
+                camBounds.MinY * 1.5f
+                ),
+            "right"
+            );
+            rightWall.AddComponent<MoveWithCamera>().SetFollowOnXAxis(false);
         }
 
-        private void CreateWall(RectangleF rect, string name) {
+        private Entity CreateWall(RectangleF rect, string name) {
             var wall = CreateEntity(name, rect.Center);
             wall.AddComponent(new StaticObject(rect.Size));
 
             var renderer = wall.AddComponent<PrototypeSpriteRenderer>();
             renderer.SetWidth(rect.Width);
             renderer.SetHeight(rect.Height);
+
+            return wall;
         }
 
         private void BlockSpawnerTick() {

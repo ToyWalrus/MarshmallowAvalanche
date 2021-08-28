@@ -92,7 +92,7 @@ namespace MarshmallowAvalanche {
 
             base.Update();
 
-            StickToFallingBlock();
+            MatchFallingBlockVelocity();
         }
 
         protected override float GetDirectionalSpeedModifier() {
@@ -137,7 +137,12 @@ namespace MarshmallowAvalanche {
         }
 
         private void CheckForWallInteraction() {
-            bool isSliding = State == CharacterState.Sliding;
+            bool isSliding = State == CharacterState.Sliding && 
+                !Flags.IsFlagSet(
+                    _collisionData.Collider?.PhysicsLayer ?? _previousFrameCollisionData.Collider.PhysicsLayer, 
+                    (int)PhysicsLayers.Static
+                );
+
             bool isOnLeftWall = KeyDown(CharacterInput.Left) && isSliding;
             bool isOnRightWall = KeyDown(CharacterInput.Right) && isSliding;
             bool isWallJumping = KeyPressed(CharacterInput.Jump) && isSliding;
@@ -163,9 +168,9 @@ namespace MarshmallowAvalanche {
             }
         }
 
-        private void StickToFallingBlock() {
+        private void MatchFallingBlockVelocity() {
             if (Grounded) {
-                FallingBlock block = _collisionResult.Collider?.GetComponent<FallingBlock>();
+                FallingBlock block = _collisionData.Collider?.GetComponent<FallingBlock>();
                 if (block != null) {
                     _velocity.Y = block.Velocity.Y;
                 }

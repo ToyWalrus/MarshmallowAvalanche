@@ -68,8 +68,8 @@ namespace MarshmallowAvalanche.Physics {
             _velocity.Y = MathF.Min(_velocity.Y, MaxFallSpeed);
             Vector2 deltaMovement = _velocity * Time.DeltaTime;
 
-            if (_mover.Move(deltaMovement, out _collisionResult)) {
-                SetTouchingBorder(_collisionResult.Collider.GetComponent<PhysicsObject>());
+            if (_mover.Move(deltaMovement, out _collisionData)) {
+                SetTouchingBorder(_collisionData.Collider.GetComponent<PhysicsObject>());
             }
         }
 
@@ -90,6 +90,7 @@ namespace MarshmallowAvalanche.Physics {
             wasOnRightWall = OnRightWall;
             wasOnLeftWall = OnLeftWall;
             wasTouchingTopEdge = TouchingTopEdge;
+            _previousFrameCollisionData = _collisionData;
 
             Grounded = false;
             OnLeftWall = false;
@@ -99,7 +100,7 @@ namespace MarshmallowAvalanche.Physics {
 
         public void SetTouchingBorder(PhysicsObject other) {
             if (other == null) return;
-            Vector2 overlap = _collisionResult.MinimumTranslationVector;
+            Vector2 overlap = _collisionData.MinimumTranslationVector;
 
             if (overlap.X < 0) {
                 OnLeftWall = true;

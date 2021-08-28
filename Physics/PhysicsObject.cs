@@ -9,7 +9,8 @@ namespace MarshmallowAvalanche.Physics {
         public RectangleF Bounds => Collider.Bounds;
         public BoxCollider Collider { get; private set; }
 
-        protected CollisionResult _collisionResult;
+        protected CollisionResult _collisionData;
+        protected CollisionResult _previousFrameCollisionData;
 
         public override void OnAddedToEntity() {
             Collider = Entity.GetComponent<BoxCollider>();
