@@ -11,10 +11,10 @@ namespace MarshmallowAvalanche.Physics {
             Velocity = new Vector2(0, MaxFallSpeed);
         }
 
-        public override void Update(GameTime gt) {
+        public override void Update() {
             // Blocks will never move once grounded
             if (Grounded) return;
-            base.Update(gt);
+            base.Update();
         }
 
         public override bool CanCollideWith(PhysicsObject other) {

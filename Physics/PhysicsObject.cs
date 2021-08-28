@@ -3,9 +3,11 @@ using Microsoft.Xna.Framework;
 using Nez;
 
 namespace MarshmallowAvalanche.Physics {
-    public abstract class PhysicsObject : Entity {
+    public abstract class PhysicsObject : Component, IUpdatable {
         public bool IsStatic => this is StaticObject;
         public bool IsDynamic => this is MovingObject;
+
+        private Vector2 _initialSize;
 
         public Vector2 Size => Collider.Bounds.Size;
         public RectangleF Bounds => Collider.Bounds;
@@ -14,15 +16,19 @@ namespace MarshmallowAvalanche.Physics {
             protected set;
         }
 
-        public PhysicsObject(Vector2 position, Vector2 size) {
-            Collider = AddComponent(new BoxCollider(position.X, position.Y, size.X, size.Y));
+        protected CollisionResult _collisionResult;
+
+        public override void OnAddedToEntity() {
+            Collider = Entity.AddComponent(new BoxCollider(0, 0, _initialSize.X, _initialSize.Y));
+            Collider.SetLocalOffset(Vector2.Zero);
         }
 
-        public PhysicsObject(Rectangle bounds) {
-            Collider = AddComponent(new BoxCollider(bounds));
+        public PhysicsObject() : this(Vector2.Zero) { }
+        public PhysicsObject(Vector2 size) {
+            _initialSize = size;
         }
 
-        public abstract void Update(GameTime gt);
+        public abstract void Update();
 
         public virtual bool CanCollideWith(PhysicsObject other) {
             return true;

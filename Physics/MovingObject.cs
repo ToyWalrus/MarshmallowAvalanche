@@ -9,7 +9,7 @@ namespace MarshmallowAvalanche.Physics {
     public abstract class MovingObject : PhysicsObject {
         public const float GravityConst = 9.8f;
 
-        public MovingObject(Vector2 position, Vector2 size) : base(position, size) {
+        public MovingObject(Vector2 position, Vector2 size) : base(size) {
             gravityModifier = 1;
             MaxFallSpeed = 1000;
             TouchingTopEdge = false;
@@ -18,13 +18,18 @@ namespace MarshmallowAvalanche.Physics {
             Grounded = false;
         }
 
-        public MovingObject(Rectangle bounds) : base(bounds) {
+        public MovingObject(Rectangle bounds) : base(bounds.Size.ToVector2()) {
             gravityModifier = 1;
             MaxFallSpeed = 1000;
             TouchingTopEdge = false;
             OnRightWall = false;
             OnLeftWall = false;
             Grounded = false;
+        }
+
+        public override void OnAddedToEntity() {
+            base.OnAddedToEntity();
+            _mover = Entity.AddComponent<Mover>();
         }
 
         /// <summary>
@@ -36,6 +41,8 @@ namespace MarshmallowAvalanche.Physics {
             set => _velocity = value;
         }
         protected Vector2 _velocity;
+
+        protected Mover _mover;
 
         public float MaxFallSpeed { get; set; }
 
@@ -55,17 +62,16 @@ namespace MarshmallowAvalanche.Physics {
 
         protected float gravityModifier;
 
-        public override void Update(GameTime gt) {
+        public override void Update() {
+            ResetCollisionStatus();
+
             _velocity.Y += gravityModifier * GravityConst * GetDirectionalSpeedModifier();
             _velocity.Y = MathF.Min(_velocity.Y, MaxFallSpeed);
             Vector2 deltaMovement = _velocity * Time.DeltaTime;
 
-            if (Collider.CollidesWithAny(ref deltaMovement, out CollisionResult result)) {
-                Debug.Log("Collision result: {0}", result);
+            if (_mover.Move(deltaMovement, out _collisionResult)) {
+                AdjustForCollisionWith(_collisionResult.Collider.GetComponent<PhysicsObject>());
             }
-
-            Position += deltaMovement;
-            Velocity = deltaMovement / Time.DeltaTime;
         }
 
         protected virtual float GetDirectionalSpeedModifier() {
@@ -92,50 +98,38 @@ namespace MarshmallowAvalanche.Physics {
             TouchingTopEdge = false;
         }
 
-        //public override void CheckForCollisionWith(PhysicsObject other) {
-        //    if (other == null || !CanCollideWith(other)) return;
+        public void AdjustForCollisionWith(PhysicsObject other) {
+            if (other == null || !CanCollideWith(other)) return;
+            Vector2 overlap = _collisionResult.MinimumTranslationVector;
 
-        //    RectF otherBounds = other.Bounds;
-        //    Vector2 _position = Position;
+            if (overlap.X < 0) {
+                OnLeftWall = true;
+                if (_velocity.X < 0) {
+                    _velocity.X = 0;
+                }
+            }
 
-        //    if (Bounds.Intersects(otherBounds, out Vector2 overlap)) {
+            if (overlap.X > 0) {
+                OnRightWall = true;
+                if (_velocity.X > 0) {
+                    _velocity.X = 0;
+                }
+            }
 
-        //        // TODO: add mass? the lesser mass object moves?
-        //        // We only care about the lesser overlap amount
-        //        bool xIsSmaller = Math.Abs(overlap.X) < Math.Abs(overlap.Y);
-        //        if (xIsSmaller) {
-        //            if (overlap.X < 0) {
-        //                OnLeftWall = true;
-        //                _position.X = otherBounds.Right;
-        //                if (_velocity.X < 0) {
-        //                    _velocity.X = 0;
-        //                }
-        //            }
-        //            if (overlap.X > 0) {
-        //                OnRightWall = true;
-        //                _position.X = otherBounds.Left - Size.X;
-        //                if (_velocity.X > 0) {
-        //                    _velocity.X = 0;
-        //                }
-        //            }
-        //        } else {
-        //            if (overlap.Y < 0) {
-        //                TouchingTopEdge = true;
-        //                _position.Y = otherBounds.Bottom;
-        //                if (_velocity.Y < 0) {
-        //                    _velocity.Y = 0;
-        //                }
-        //            }
-        //            if (overlap.Y > 0) {
-        //                Grounded = true;
-        //                _position.Y = otherBounds.Top - Size.Y;
-        //                if (_velocity.Y > 0) {
-        //                    _velocity.Y = 0;
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-    
+            if (overlap.Y < 0) {
+                TouchingTopEdge = true;
+                if (_velocity.Y < 0) {
+                    _velocity.Y = 0;
+                }
+            }
+
+            if (overlap.Y > 0) {
+                Grounded = true;
+                if (_velocity.Y > 0) {
+                    _velocity.Y = 0;
+                }
+            }
+        }
+
     }
 }

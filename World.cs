@@ -63,9 +63,9 @@ namespace MarshmallowAvalanche {
             }
         }
 
-        public void Update(GameTime gt) {
+        public void Update() {
             foreach (PhysicsObject obj in objectSections.Keys) {
-                obj.Update(gt);
+                obj.Update();
                 UpdateCollisionDataFor(obj);
             }
         }
