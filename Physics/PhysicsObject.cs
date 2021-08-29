@@ -37,5 +37,6 @@ namespace MarshmallowAvalanche.Physics {
         Static = 1 << 0,
         Block = 1 << 1,
         Marshmallow = 1 << 2,
+        Liquid = 1 << 3,
     }
 }

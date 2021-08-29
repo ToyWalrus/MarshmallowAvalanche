@@ -6,9 +6,11 @@ namespace MarshmallowAvalanche {
     public class MainScene : Scene {
         private BlockSpawner blockSpawner;
         private Character marshmallow;
-        private float blockSpawnInterval = 1f;
+        private RisingZone risingZone;
+        private readonly float blockSpawnInterval = 1f;
+        private readonly float sceneWidth = GameRoot.DesiredWindowWidth * 2;
+        private float risingZoneDelay = 1f;
         private float blockSpawnTimer;
-        private float sceneWidth = GameRoot.DesiredWindowWidth * 2;
 
         public MainScene() : base() { blockSpawnTimer = blockSpawnInterval; }
         public MainScene(float blockSpawnInterval) : base() {
@@ -19,8 +21,9 @@ namespace MarshmallowAvalanche {
         public override void Initialize() {
             base.Initialize();
 
-            ClearColor = Color.CornflowerBlue;
+            AddRenderer(new DefaultRenderer());
             SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
+            ClearColor = Color.CornflowerBlue;
 
             Vector2 marshmallowSize = new Vector2(30, 60);
             marshmallow = CreateEntity("marshmallow", new Vector2(0, GameRoot.DesiredWindowHeight - marshmallowSize.Y * 1.5f))
@@ -39,6 +42,9 @@ namespace MarshmallowAvalanche {
             MoveWithCamera spawnerMover = blockSpawner.AddComponent<MoveWithCamera>();
             spawnerMover.SetFollowOnXAxis(false);
 
+            risingZone = CreateEntity("rising-zone").AddComponent<RisingZone>();
+            risingZone.SetRiseRate(10);
+
             Camera.Entity.AddComponent(new FollowCamera(marshmallow.Entity));
             CameraBounds camBounds = Camera.Entity.AddComponent(new CameraBounds(GameRoot.DesiredWindowHeight, -sceneWidth / 2, sceneWidth / 2));
 
@@ -48,12 +54,25 @@ namespace MarshmallowAvalanche {
         public override void Update() {
             base.Update();
             BlockSpawnerTick();
+
+            if (!risingZone.IsRising) {
+                risingZoneDelay -= Time.DeltaTime;
+                if (risingZoneDelay < 0) {
+                    risingZone.BeginRising();
+                    risingZone.SetCharacter(marshmallow);
+                    risingZone.SetZoneColor(Color.Red);
+                    // This part is a hack... got to figure out positioning stuff
+                    risingZone.Entity.Position = new Vector2(-sceneWidth, GameRoot.DesiredWindowHeight + marshmallow.Size.Y / 2);
+                    risingZone.Collider.SetWidth(sceneWidth * 2);
+                    Debug.Log("start rising");
+                }
+            }
         }
 
 
         private void SetUpWorldBounds(CameraBounds camBounds) {
             int boundThickness = 10;
-            CreateWall(new RectangleF(
+            var botWall = CreateWall(new RectangleF(
                 camBounds.MinX - camBounds.ExtraCamPadding.X,
                 camBounds.MinY + camBounds.ExtraCamPadding.Y,
                 camBounds.MaxX - camBounds.MinX + camBounds.ExtraCamPadding.X * 2,
@@ -87,9 +106,9 @@ namespace MarshmallowAvalanche {
             var wall = CreateEntity(name, rect.Center);
             wall.AddComponent(new StaticObject(rect.Size));
 
-            var renderer = wall.AddComponent<PrototypeSpriteRenderer>();
-            renderer.SetWidth(rect.Width);
-            renderer.SetHeight(rect.Height);
+            //var renderer = wall.AddComponent<PrototypeSpriteRenderer>();
+            //renderer.SetWidth(rect.Width);
+            //renderer.SetHeight(rect.Height);
 
             return wall;
         }

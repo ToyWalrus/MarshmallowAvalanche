@@ -63,6 +63,7 @@ namespace MarshmallowAvalanche {
         public override void OnAddedToEntity() {
             base.OnAddedToEntity();
             Collider.PhysicsLayer = (int)PhysicsLayers.Marshmallow;
+            Collider.CollidesWithLayers = (int)(PhysicsLayers.Block | PhysicsLayers.Static);
         }
 
         public override float GetGravityModifier() {
