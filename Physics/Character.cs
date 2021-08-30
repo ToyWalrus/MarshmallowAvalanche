@@ -64,6 +64,11 @@ namespace MarshmallowAvalanche {
             base.OnAddedToEntity();
             Collider.PhysicsLayer = (int)PhysicsLayers.Marshmallow;
             Collider.CollidesWithLayers = (int)(PhysicsLayers.Block | PhysicsLayers.Static);
+
+            var renderer = Entity.AddComponent<PrototypeSpriteRenderer>();
+            renderer.Color = Color.White;
+            renderer.SetHeight(Collider.Height);
+            renderer.SetWidth(Collider.Width);
         }
 
         public override float GetGravityModifier() {

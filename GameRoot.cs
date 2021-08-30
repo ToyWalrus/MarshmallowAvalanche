@@ -8,6 +8,8 @@ namespace MarshmallowAvalanche {
         protected override void Initialize() {
             base.Initialize();
 
+            Nez.Console.DebugConsole.RenderScale = 2;            
+
             Window.Title = "Marshmallow Avalanche";
             Window.AllowUserResizing = true;
 

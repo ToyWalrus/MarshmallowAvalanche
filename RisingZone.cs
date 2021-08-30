@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework;
 namespace MarshmallowAvalanche {
     public class RisingZone : Component, IUpdatable {
         private float riseRate = 5f;
-        private Collider characterCollider;
+        private Character character;
         private PrototypeSpriteRenderer renderer;
         private Color zoneColor;
 
@@ -23,11 +23,9 @@ namespace MarshmallowAvalanche {
             }
 
             Collider.SetHeight(0);
-            Collider.PhysicsLayer = (int)PhysicsLayers.Liquid;
-            Collider.CollidesWithLayers = (int)PhysicsLayers.None;
+            Collider.IsTrigger = true;
 
             renderer = Entity.AddComponent<PrototypeSpriteRenderer>();
-            renderer.RenderLayer = int.MinValue; // render over everything else
 
             if (zoneColor != null) {
                 renderer.Color = zoneColor;
@@ -35,7 +33,7 @@ namespace MarshmallowAvalanche {
         }
 
         public void SetCharacter(Character character) {
-            characterCollider = character.GetComponent<Collider>();
+            this.character = character;
         }
 
         public void SetZoneColor(Color color) {
@@ -67,20 +65,29 @@ namespace MarshmallowAvalanche {
             float amountChange = riseRate * Time.DeltaTime;
 
             Entity.Position -= new Vector2(0, amountChange);
-            Collider.SetHeight(Collider.Height + amountChange);
+            Collider.SetHeight(Collider.Height + (amountChange * 2));
 
             UpdateRenderer();
             CheckForCharacterOverlap();
         }
 
         private void CheckForCharacterOverlap() {
-            if (characterCollider == null) return;
-            if (Collider.CollidesWith(characterCollider, out CollisionResult result)) {
-                //Debug.Log("Rising zone overtook character!");
-            }
+            if (character == null) return;
+            //BoxCollider characterCollider = character.Collider;
+            //if (characterCollider.CollidesWith(Collider, out CollisionResult result)) {
+            //    PrototypeSpriteRenderer characterRenderer = character.GetComponent<PrototypeSpriteRenderer>();
+
+            //    float overlapAmount = 0;
+            //    float newHeight = characterCollider.Height - MathF.Max(overlapAmount, 0);
+
+            //    characterCollider.SetHeight(newHeight);
+            //    characterRenderer.SetHeight(newHeight);
+            //}
         }
 
         private void UpdateRenderer() {
+            // not sure why the +25 is needed but otherwise the renderer is, well, offset
+            renderer.SetLocalOffset(new Vector2(-Collider.Width / 2, -Collider.Height / 2 + 25));
             renderer.SetHeight(Collider.Height);
             renderer.SetWidth(Collider.Width);
         }

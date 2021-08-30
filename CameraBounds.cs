@@ -3,20 +3,11 @@ using Nez;
 
 namespace MarshmallowAvalanche {
     public class CameraBounds : Component, IUpdatable {
-
-        private float _minY;
-        public float MinY { get => _minY + ExtraCamPadding.Y; set => _minY = value; }
-
-        private float _minX;
-        public float MinX { get => _minX + ExtraCamPadding.X; set => _minX = value; }
-
-        private float _maxX;
-        public float MaxX { get => _maxX - ExtraCamPadding.X; set => _maxX = value; }
-
-        public Vector2 ExtraCamPadding { get; set; }
+        public float MinY { get; set; }
+        public float MinX { get; set; }
+        public float MaxX { get; set; }
 
         public CameraBounds(float minY, float minX, float maxX) {
-            ExtraCamPadding = Vector2.Zero;
             MinY = minY;
             MinX = minX;
             MaxX = maxX;

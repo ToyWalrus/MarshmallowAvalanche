@@ -9,7 +9,7 @@ namespace MarshmallowAvalanche {
         private RisingZone risingZone;
         private readonly float blockSpawnInterval = 1f;
         private readonly float sceneWidth = GameRoot.DesiredWindowWidth * 2;
-        private float risingZoneDelay = 1f;
+        private float risingZoneDelay = 5f;
         private float blockSpawnTimer;
 
         public MainScene() : base() { blockSpawnTimer = blockSpawnInterval; }
@@ -30,11 +30,6 @@ namespace MarshmallowAvalanche {
                 .AddComponent(new Character(marshmallowSize));
             marshmallow.SetGravityModifier(4);
             marshmallow.JumpSpeed = 700;
-
-            var renderer = marshmallow.AddComponent<PrototypeSpriteRenderer>();
-            renderer.Color = Color.White;
-            renderer.SetHeight(60);
-            renderer.SetWidth(30);
 
             float maxBlockSize = 180;
             float minBlockSize = 80;
@@ -58,13 +53,11 @@ namespace MarshmallowAvalanche {
             if (!risingZone.IsRising) {
                 risingZoneDelay -= Time.DeltaTime;
                 if (risingZoneDelay < 0) {
-                    risingZone.BeginRising();
                     risingZone.SetCharacter(marshmallow);
                     risingZone.SetZoneColor(Color.Red);
-                    // This part is a hack... got to figure out positioning stuff
-                    risingZone.Entity.Position = new Vector2(-sceneWidth, GameRoot.DesiredWindowHeight + marshmallow.Size.Y / 2);
+                    risingZone.Entity.Position = new Vector2(0, GameRoot.DesiredWindowHeight);
                     risingZone.Collider.SetWidth(sceneWidth * 2);
-                    Debug.Log("start rising");
+                    risingZone.BeginRising();
                 }
             }
         }
@@ -72,17 +65,17 @@ namespace MarshmallowAvalanche {
 
         private void SetUpWorldBounds(CameraBounds camBounds) {
             int boundThickness = 10;
-            var botWall = CreateWall(new RectangleF(
-                camBounds.MinX - camBounds.ExtraCamPadding.X,
-                camBounds.MinY + camBounds.ExtraCamPadding.Y,
-                camBounds.MaxX - camBounds.MinX + camBounds.ExtraCamPadding.X * 2,
+            CreateWall(new RectangleF(
+                camBounds.MinX,
+                camBounds.MinY,
+                camBounds.MaxX - camBounds.MinX,
                 boundThickness
                 ),
             "bot-wall"
             );
 
             var leftWall = CreateWall(new RectangleF(
-                camBounds.MinX - camBounds.ExtraCamPadding.X - boundThickness,
+                camBounds.MinX - boundThickness,
                 -camBounds.MinY / 2,
                 boundThickness,
                 camBounds.MinY * 1.5f
@@ -92,7 +85,7 @@ namespace MarshmallowAvalanche {
             leftWall.AddComponent<MoveWithCamera>().SetFollowOnXAxis(false);
 
             var rightWall = CreateWall(new RectangleF(
-                camBounds.MaxX + camBounds.ExtraCamPadding.X,
+                camBounds.MaxX,
                 -camBounds.MinY / 2,
                 boundThickness,
                 camBounds.MinY * 1.5f
