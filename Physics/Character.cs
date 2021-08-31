@@ -27,6 +27,8 @@ namespace MarshmallowAvalanche {
         public float AirMoveSpeed { get; set; }
         public float SlideSpeed { get; set; }
 
+        public bool IsBeingDissolved { get; set; }
+
         public bool doUpdate = true;
 
         public Character(Vector2 size) : base(size) {
@@ -34,6 +36,7 @@ namespace MarshmallowAvalanche {
             GroundMoveSpeed = 550;
             AirMoveSpeed = GroundMoveSpeed * .8f;
             SlideSpeed = GroundMoveSpeed / 4;
+            IsBeingDissolved = false;
 
             overriddenGravityModifier = float.NaN;
 
@@ -81,9 +84,14 @@ namespace MarshmallowAvalanche {
 
         public override void Update() {
             if (!doUpdate) return;
+            float offsetGravity = -gravityModifier * GravityConst * GetDirectionalSpeedModifier();
+            if (IsBeingDissolved && Velocity.Y > offsetGravity) {
+                _velocity.Y = offsetGravity;
+            }
 
             UpdateTimers();
             UpdateFromInput();
+
 
             if (!Grounded && wasOnGround) {
                 ticksSinceLeavingGround++;
@@ -114,8 +122,14 @@ namespace MarshmallowAvalanche {
         private void UpdateFromInput() {
             float deltaTime = Time.DeltaTime;
 
-            if (KeyPressed(CharacterInput.Jump) && (Grounded || wasOnGround)) {
-                _velocity.Y = -JumpSpeed;
+            if (KeyPressed(CharacterInput.Jump)) {
+                if (Grounded || wasOnGround) {
+                    _velocity.Y = -JumpSpeed;
+                } else if (IsBeingDissolved) {
+                    // Allow for tiny hops in liquid
+                    _velocity.Y = -JumpSpeed / 1.5f;
+                    IsBeingDissolved = false;
+                }
             } else if (KeyReleased(CharacterInput.Jump) && _velocity.Y < 0) {
                 _velocity.Y /= 2;
             }

@@ -73,21 +73,26 @@ namespace MarshmallowAvalanche {
 
         private void CheckForCharacterOverlap() {
             if (character == null) return;
-            //BoxCollider characterCollider = character.Collider;
-            //if (characterCollider.CollidesWith(Collider, out CollisionResult result)) {
-            //    PrototypeSpriteRenderer characterRenderer = character.GetComponent<PrototypeSpriteRenderer>();
+            BoxCollider characterCollider = character.Collider;
+            if (characterCollider.Height > 0 && Collider.CollidesWith(characterCollider, out _)) {
+                PrototypeSpriteRenderer characterRenderer = character.GetComponent<PrototypeSpriteRenderer>();
 
-            //    float overlapAmount = 0;
-            //    float newHeight = characterCollider.Height - MathF.Max(overlapAmount, 0);
+                float overlapAmount = MathF.Abs(MathF.Max(characterCollider.Bounds.Bottom - Collider.Bounds.Top, 0));
+                float newHeight = characterCollider.Height - overlapAmount;
 
-            //    characterCollider.SetHeight(newHeight);
-            //    characterRenderer.SetHeight(newHeight);
-            //}
+                characterCollider.SetHeight(newHeight);
+                characterRenderer.SetHeight(newHeight);
+                characterRenderer.SetOriginNormalized(new Vector2(.5f, .5f));
+                character.Entity.Position = new Vector2(character.Entity.Position.X, Collider.Bounds.Top - newHeight / 2);
+
+                character.IsBeingDissolved = true;
+            } else {
+                character.IsBeingDissolved = false;
+            }
         }
 
         private void UpdateRenderer() {
-            // not sure why the +25 is needed but otherwise the renderer is, well, offset
-            renderer.SetLocalOffset(new Vector2(-Collider.Width / 2, -Collider.Height / 2 + 25));
+            renderer.SetOriginNormalized(new Vector2(.5f, .5f));
             renderer.SetHeight(Collider.Height);
             renderer.SetWidth(Collider.Width);
         }
