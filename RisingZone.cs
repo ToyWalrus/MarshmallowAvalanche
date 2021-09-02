@@ -1,15 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using Nez;
-using MarshmallowAvalanche.Physics;
+using Nez.Sprites;
 using Microsoft.Xna.Framework;
 
 namespace MarshmallowAvalanche {
     public class RisingZone : Component, IUpdatable {
+        public const int RenderLayer = -100;
+
+        private readonly Color zoneColor = new Color(174, 23, 23);
         private float riseRate = 5f;
         private Character character;
         private PrototypeSpriteRenderer renderer;
-        private Color zoneColor;
+        private SpriteAnimator waveAnimator;
 
         public bool IsRising { get; private set; }
         public BoxCollider Collider { get; private set; }
@@ -26,22 +28,24 @@ namespace MarshmallowAvalanche {
             Collider.IsTrigger = true;
 
             renderer = Entity.AddComponent<PrototypeSpriteRenderer>();
+            renderer.Color = zoneColor;
+            renderer.RenderLayer = RenderLayer + 1;
+            renderer.SetEnabled(false);
 
-            if (zoneColor != null) {
-                renderer.Color = zoneColor;
-            }
+            var waveAtlas = Entity.Scene.Content.LoadSpriteAtlas("Content/wave/wave.atlas", true);
+            waveAnimator = Entity.Scene.CreateEntity("wave").AddComponent<SpriteAnimator>();
+
+            waveAnimator.Transform.SetParent(Transform);
+            waveAnimator.AddAnimationsFromAtlas(waveAtlas);
+            waveAnimator.RenderLayer = RenderLayer;
+            waveAnimator.SetEnabled(false);
+
         }
 
         public void SetCharacter(Character character) {
             this.character = character;
         }
 
-        public void SetZoneColor(Color color) {
-            zoneColor = new Color(color.R, color.G, color.B, (byte)150);
-            if (renderer != null) {
-                renderer.Color = zoneColor;
-            }
-        }
 
         public void BeginRising() {
             if (Collider == null) {
@@ -49,6 +53,10 @@ namespace MarshmallowAvalanche {
                 return;
             }
             IsRising = true;
+            renderer.SetEnabled(true);
+            waveAnimator.SetEnabled(true);
+            waveAnimator.Play("wave");
+
         }
 
         public void StopRising() {
@@ -95,6 +103,8 @@ namespace MarshmallowAvalanche {
             renderer.SetOriginNormalized(new Vector2(.5f, .5f));
             renderer.SetHeight(Collider.Height);
             renderer.SetWidth(Collider.Width);
+            waveAnimator.SetLocalOffset(new Vector2(0, -Collider.Bounds.Height / 2 - 10));
+
         }
     }
 }

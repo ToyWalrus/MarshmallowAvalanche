@@ -15,7 +15,7 @@ namespace MarshmallowAvalanche {
 
             Screen.SetSize(DesiredWindowWidth, DesiredWindowHeight);
 
-            Scene = new MainMenu();
+            Scene = new MainScene();
         }
     }
 }

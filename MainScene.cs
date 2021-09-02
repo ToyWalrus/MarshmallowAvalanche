@@ -13,8 +13,9 @@ namespace MarshmallowAvalanche {
         private float blockSpawnTimer;
 
         public MainScene() : base() { blockSpawnTimer = blockSpawnInterval; }
-        public MainScene(float blockSpawnInterval) : base() {
+        public MainScene(float sceneWidth, float blockSpawnInterval = 1) : base() {
             this.blockSpawnInterval = blockSpawnInterval;
+            this.sceneWidth = sceneWidth;
             blockSpawnTimer = blockSpawnInterval;
         }
 
@@ -34,7 +35,7 @@ namespace MarshmallowAvalanche {
             float maxBlockSize = 180;
             float minBlockSize = 80;
             Vector2 spawnerSize = new Vector2(sceneWidth - maxBlockSize * 2, 40);
-            blockSpawner = CreateEntity("block-spawner", new Vector2(-spawnerSize.X/2, 0))
+            blockSpawner = CreateEntity("block-spawner", new Vector2(-spawnerSize.X / 2, 0))
                 .AddComponent(new BlockSpawner(spawnerSize, minBlockSize, maxBlockSize));
             MoveWithCamera spawnerMover = blockSpawner.AddComponent<MoveWithCamera>();
             spawnerMover.SetFollowOnXAxis(false);
@@ -56,7 +57,6 @@ namespace MarshmallowAvalanche {
                 risingZoneDelay -= Time.DeltaTime;
                 if (risingZoneDelay < 0) {
                     risingZone.SetCharacter(marshmallow);
-                    risingZone.SetZoneColor(Color.Red);
                     risingZone.Entity.Position = new Vector2(0, GameRoot.DesiredWindowHeight);
                     risingZone.Collider.SetWidth(sceneWidth * 2);
                     risingZone.BeginRising();

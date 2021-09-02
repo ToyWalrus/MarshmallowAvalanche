@@ -31,7 +31,7 @@ namespace MarshmallowAvalanche.Physics {
             if (sr == null) {
                 sr = Entity.AddComponent<SpriteRenderer>();
             }
-            sr.Sprite = new Sprite(Entity.Scene.Content.LoadTexture("FallingBlock"));
+            sr.Sprite = new Sprite(Entity.Scene.Content.LoadTexture("blocks/FallingBlock"));
 
             Rectangle spriteBounds = sr.Sprite.Texture2D.Bounds;
             float scale = Bounds.Width / spriteBounds.Width;

@@ -13,9 +13,9 @@ namespace MarshmallowAvalanche {
             base.Initialize();
 
             font = Content.LoadBitmapFont("Content/Marshmallow.fnt", true);
-            Texture2D buttonTex = Content.LoadTexture("ButtonTexture");
-            Texture2D buttonTexHover = Content.LoadTexture("ButtonTexture-Hover");
-            Texture2D buttonTexPressed = Content.LoadTexture("ButtonTexture-Pressed");
+            Texture2D buttonTex = Content.LoadTexture("ui/ButtonTexture");
+            Texture2D buttonTexHover = Content.LoadTexture("ui/ButtonTexture-Hover");
+            Texture2D buttonTexPressed = Content.LoadTexture("ui/ButtonTexture-Pressed");
 
             Skin buttonSkin = new Skin();
             buttonSkin.Add("default", new TextButtonStyle {
@@ -58,7 +58,7 @@ namespace MarshmallowAvalanche {
         }
 
         private void OnClickPlay(Button b) {
-            Core.StartSceneTransition(new CrossFadeTransition(() => new MainScene()));
+            Core.StartSceneTransition(new CrossFadeTransition(() => new MainScene(GameRoot.DesiredWindowWidth * 1.5f)));
         }
 
         private void OnClickQuit(Button b) {
