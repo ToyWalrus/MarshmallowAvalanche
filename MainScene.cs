@@ -2,29 +2,42 @@
 using Microsoft.Xna.Framework;
 using Nez;
 
+/* 
+ * TODO:
+ * Make blocks random colors from set list
+ * Create marshmallow animated sprite
+ * Record height
+ * Make liquid rise faster as you get higher
+ * Add interesting background
+ * Add sound (maybe music too?)
+ */
+
 namespace MarshmallowAvalanche {
     public class MainScene : Scene {
+        public readonly float SceneWidth = GameRoot.DesiredWindowWidth * 2;
+
         private BlockSpawner blockSpawner;
         private Character marshmallow;
         private RisingZone risingZone;
+        private GameUIOverlay gameOverlay;
         private readonly float blockSpawnInterval = 1f;
-        private readonly float sceneWidth = GameRoot.DesiredWindowWidth * 2;
         private float risingZoneDelay = 5f;
         private float blockSpawnTimer;
+        private bool isSpawningBlocks = true;
+        private bool isGameOver = false;
 
-        public MainScene() : base() { blockSpawnTimer = blockSpawnInterval; }
-        public MainScene(float sceneWidth, float blockSpawnInterval = 1) : base() {
+        public MainScene() : base() {
+            blockSpawnTimer = blockSpawnInterval;
+        }
+
+        public MainScene(float sceneWidth = GameRoot.DesiredWindowWidth * 2, float blockSpawnInterval = 1) : base() {
             this.blockSpawnInterval = blockSpawnInterval;
-            this.sceneWidth = sceneWidth;
+            SceneWidth = sceneWidth;
             blockSpawnTimer = blockSpawnInterval;
         }
 
         public override void Initialize() {
             base.Initialize();
-
-            AddRenderer(new DefaultRenderer());
-            SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
-            ClearColor = Color.CornflowerBlue;
 
             Vector2 marshmallowSize = new Vector2(30, 60);
             marshmallow = CreateEntity("marshmallow", new Vector2(0, GameRoot.DesiredWindowHeight - marshmallowSize.Y * 1.5f))
@@ -34,7 +47,7 @@ namespace MarshmallowAvalanche {
 
             float maxBlockSize = 180;
             float minBlockSize = 80;
-            Vector2 spawnerSize = new Vector2(sceneWidth - maxBlockSize * 2, 40);
+            Vector2 spawnerSize = new Vector2(SceneWidth - maxBlockSize * 2, 40);
             blockSpawner = CreateEntity("block-spawner", new Vector2(-spawnerSize.X / 2, 0))
                 .AddComponent(new BlockSpawner(spawnerSize, minBlockSize, maxBlockSize));
             MoveWithCamera spawnerMover = blockSpawner.AddComponent<MoveWithCamera>();
@@ -44,9 +57,15 @@ namespace MarshmallowAvalanche {
             risingZone.SetRiseRate(10);
 
             Camera.Entity.AddComponent(new FollowCamera(marshmallow.Entity));
-            CameraBounds camBounds = Camera.Entity.AddComponent(new CameraBounds(GameRoot.DesiredWindowHeight, -sceneWidth / 2, sceneWidth / 2));
+            CameraBounds camBounds = Camera.Entity.AddComponent(new CameraBounds(GameRoot.DesiredWindowHeight, -SceneWidth / 2, SceneWidth / 2));
+            SetUpWorldBounds(camBounds);            
 
-            SetUpWorldBounds(camBounds);
+            gameOverlay = CreateEntity("game-overlay").AddComponent<GameUIOverlay>();
+
+            AddRenderer(new RenderLayerExcludeRenderer(0, new int[] { GameUIOverlay.RenderLayer }));
+            AddRenderer(new ScreenSpaceRenderer(1, new int[] { GameUIOverlay.RenderLayer }));
+            SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
+            ClearColor = Color.CornflowerBlue;
         }
 
         public override void Update() {
@@ -58,9 +77,16 @@ namespace MarshmallowAvalanche {
                 if (risingZoneDelay < 0) {
                     risingZone.SetCharacter(marshmallow);
                     risingZone.Entity.Position = new Vector2(0, GameRoot.DesiredWindowHeight);
-                    risingZone.Collider.SetWidth(sceneWidth * 2);
+                    risingZone.Collider.SetWidth(SceneWidth * 2);
                     risingZone.BeginRising();
                 }
+            }
+
+            if (marshmallow.IsDead && !isGameOver) {
+                Camera.Entity.RemoveComponent<FollowCamera>();
+                gameOverlay.OnGameOver();
+                isSpawningBlocks = false;
+                isGameOver = true;
             }
         }
 
@@ -110,7 +136,7 @@ namespace MarshmallowAvalanche {
 
         private void BlockSpawnerTick() {
             blockSpawnTimer -= Time.DeltaTime;
-            if (blockSpawnTimer < 0) {
+            if (isSpawningBlocks && blockSpawnTimer < 0) {
                 blockSpawnTimer = blockSpawnInterval;
                 FallingBlock block = blockSpawner.SpawnBlock(250);
                 block?.SetBlockColor(GetRandomColor());

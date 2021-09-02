@@ -13,6 +13,8 @@ namespace MarshmallowAvalanche {
             Jump = 2,
         }
 
+        public bool IsDead => Collider.Height <= .25f;
+
         private float overriddenGravityModifier;
         private readonly Dictionary<CharacterInput, ICollection<Keys>> inputKeyMap;
 
@@ -28,8 +30,6 @@ namespace MarshmallowAvalanche {
         public float SlideSpeed { get; set; }
 
         public bool IsBeingDissolved { get; set; }
-
-        public bool doUpdate = true;
 
         public Character(Vector2 size) : base(size) {
             JumpSpeed = 500;
@@ -83,7 +83,11 @@ namespace MarshmallowAvalanche {
 
 
         public override void Update() {
-            if (!doUpdate) return;
+            if (IsDead) {
+                SetEnabled(false);
+                return;
+            }
+
             float offsetGravity = -gravityModifier * GravityConst * GetDirectionalSpeedModifier();
             if (IsBeingDissolved && Velocity.Y > offsetGravity) {
                 _velocity.Y = offsetGravity;
@@ -135,6 +139,10 @@ namespace MarshmallowAvalanche {
             }
 
             float moveSpeed = Grounded ? GroundMoveSpeed : AirMoveSpeed;
+            if (IsBeingDissolved) {
+                moveSpeed -= moveSpeed / 1.5f;
+            }
+
             float delta = moveSpeed * deltaTime + 100;
 
             if (KeyDown(CharacterInput.Left) == KeyDown(CharacterInput.Right)) {

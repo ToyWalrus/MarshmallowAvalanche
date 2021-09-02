@@ -36,10 +36,10 @@ namespace MarshmallowAvalanche {
             waveAnimator = Entity.Scene.CreateEntity("wave").AddComponent<SpriteAnimator>();
 
             waveAnimator.Transform.SetParent(Transform);
+            waveAnimator.Transform.LocalScale = new Vector2(1.25f, 1);
             waveAnimator.AddAnimationsFromAtlas(waveAtlas);
             waveAnimator.RenderLayer = RenderLayer;
             waveAnimator.SetEnabled(false);
-
         }
 
         public void SetCharacter(Character character) {
@@ -56,7 +56,6 @@ namespace MarshmallowAvalanche {
             renderer.SetEnabled(true);
             waveAnimator.SetEnabled(true);
             waveAnimator.Play("wave");
-
         }
 
         public void StopRising() {
@@ -68,7 +67,8 @@ namespace MarshmallowAvalanche {
         }
 
         public void Update() {
-            if (!IsRising) return;
+            if (!IsRising)
+                return;
 
             float amountChange = riseRate * Time.DeltaTime;
 
@@ -80,7 +80,9 @@ namespace MarshmallowAvalanche {
         }
 
         private void CheckForCharacterOverlap() {
-            if (character == null) return;
+            if (character == null)
+                return;
+
             BoxCollider characterCollider = character.Collider;
             if (characterCollider.Height > 0 && Collider.CollidesWith(characterCollider, out _)) {
                 PrototypeSpriteRenderer characterRenderer = character.GetComponent<PrototypeSpriteRenderer>();
@@ -103,8 +105,8 @@ namespace MarshmallowAvalanche {
             renderer.SetOriginNormalized(new Vector2(.5f, .5f));
             renderer.SetHeight(Collider.Height);
             renderer.SetWidth(Collider.Width);
-            waveAnimator.SetLocalOffset(new Vector2(0, -Collider.Bounds.Height / 2 - 10));
 
+            waveAnimator.SetLocalOffset(new Vector2(0, -Collider.Bounds.Height / 2 - 10));
         }
     }
 }
