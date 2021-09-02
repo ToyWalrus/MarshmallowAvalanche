@@ -8,14 +8,14 @@ namespace MarshmallowAvalanche {
         protected override void Initialize() {
             base.Initialize();
 
-            Nez.Console.DebugConsole.RenderScale = 2;            
+            Nez.Console.DebugConsole.RenderScale = 2;
 
             Window.Title = "Marshmallow Avalanche";
             Window.AllowUserResizing = true;
 
             Screen.SetSize(DesiredWindowWidth, DesiredWindowHeight);
 
-            Scene = new MainScene();
+            Scene = new MainMenu();
         }
     }
 }
