@@ -33,7 +33,9 @@ namespace MarshmallowAvalanche {
 
             float maxBlockSize = 180;
             float minBlockSize = 80;
-            blockSpawner = CreateEntity("block-spawner").AddComponent(new BlockSpawner(new Vector2(sceneWidth - maxBlockSize * 2, 40), minBlockSize, maxBlockSize));
+            Vector2 spawnerSize = new Vector2(sceneWidth - maxBlockSize * 2, 40);
+            blockSpawner = CreateEntity("block-spawner", new Vector2(-spawnerSize.X/2, 0))
+                .AddComponent(new BlockSpawner(spawnerSize, minBlockSize, maxBlockSize));
             MoveWithCamera spawnerMover = blockSpawner.AddComponent<MoveWithCamera>();
             spawnerMover.SetFollowOnXAxis(false);
 
