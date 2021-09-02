@@ -58,7 +58,7 @@ namespace MarshmallowAvalanche {
         }
 
         private void OnClickPlay(Button b) {
-            Core.StartSceneTransition(new SquaresTransition(() => new MainScene()));
+            Core.StartSceneTransition(new CrossFadeTransition(() => new MainScene()));
         }
 
         private void OnClickQuit(Button b) {
