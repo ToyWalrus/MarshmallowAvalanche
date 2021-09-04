@@ -11,6 +11,11 @@ namespace MarshmallowAvalanche {
         private Table buttonTable;
         private LabelStyle labelStyle;
         private Skin buttonSkin;
+        private Score score;
+
+        public GameUIOverlay(Score score) {
+            this.score = score;
+        }
 
         public override void OnAddedToEntity() {
             base.OnAddedToEntity();
@@ -41,6 +46,8 @@ namespace MarshmallowAvalanche {
         }
 
         public void OnGameOver() {
+            score.SaveData();
+
             labelTable.Clear();
             labelTable.SetFillParent(true).Center();
 
