@@ -62,8 +62,8 @@ namespace MarshmallowAvalanche {
                 FontScale = .6f,
             };
 
-            Label topScoreLabel = new Label($"Top Score: {score.TopScore:F1}", style);
-            Label currentScoreLabel = new Label($"Score: {score.CurrentScore:F1}", style);
+            Label topScoreLabel = new Label($"Top Score: {score.TopScore:F1}\"", style);
+            Label currentScoreLabel = new Label($"Score: {score.CurrentScore:F1}\"", style);
 
             labelTable.Add(topScoreLabel).Left();
             labelTable.Row().SetPadTop(10);

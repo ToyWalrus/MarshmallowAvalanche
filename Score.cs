@@ -7,21 +7,22 @@ using Nez;
 namespace MarshmallowAvalanche {
     public class Score {
         public float TopScore { get; set; }
+        public float CurrentScore => _currentScore;
 
-        [NonSerialized]
-        public float CurrentScore;
+        private float _currentScore;
         private float startingHeight;
 
         public void SetStartingHeight(float position) {
             startingHeight = position;
-            CurrentScore = 0;
+            _currentScore = 0;
         }
 
-        public void UpdateScoreIfBetter(float newPos) {
-            CurrentScore = Math.Max(CurrentScore, startingHeight - newPos);
-            TopScore = Math.Max(TopScore, CurrentScore);
+        public bool UpdateScoreIfBetter(float newPos) {
+            float prevScore = _currentScore;
+            _currentScore = Math.Max(_currentScore, startingHeight - newPos);
+            TopScore = Math.Max(TopScore, _currentScore);
+            return _currentScore != prevScore;
         }
-
 
         #region Serialization
         private const string dirname = "MarshmallowAvalanche";

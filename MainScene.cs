@@ -7,9 +7,10 @@ using Nez;
  * Make blocks random colors from set list
  * Create marshmallow animated sprite
  * Get crushed by blocks
- * Make liquid rise faster as you get higher
+ * Make settings for adjusting rise rate & block spawn (maybe time scale?)
  * Add interesting background
  * Add sound (maybe music too?)
+ * Remove blocks that have been fully consumed by rising zone
  */
 
 namespace MarshmallowAvalanche {
@@ -20,19 +21,41 @@ namespace MarshmallowAvalanche {
         private Character marshmallow;
         private RisingZone risingZone;
         private GameUIOverlay gameOverlay;
-        private readonly float blockSpawnInterval = 1f;
-        private float risingZoneDelay = 5f;
+
+        // How often the rate of block spawns increases
+        private readonly float blockSpawnIncreaseInterval = 5f;
+
+        // The timer to count down the increase interval of block spawns
+        private float blockSpawnIncreaseTimer;
+
+        // The delay between the spawn of blocks
+        private float blockSpawnInterval = 1f;
+
+        // The timer to count down the spawn interval
         private float blockSpawnTimer;
+
+        // The delay before the zone starts rising at the start of the game
+        private readonly float risingZoneDelay = 5f;
+
+        // How often the rate of the rising zone increases
+        private readonly float risingZoneRateIncreaseInterval = 3f;
+
+        // The timer to count down the delay for the rising zone
+        private float risingZoneTimer;
+
         private bool isSpawningBlocks = true;
         private bool isGameOver = false;
         private bool haveSetStartingHeight = false;
         private Score score;
+        private PrototypeSpriteRenderer scoreLine;
 
         public MainScene() : base() {
+            blockSpawnIncreaseTimer = blockSpawnIncreaseInterval;
             blockSpawnTimer = blockSpawnInterval;
+            risingZoneTimer = risingZoneDelay;
         }
 
-        public MainScene(float sceneWidth = GameRoot.DesiredWindowWidth * 2, float blockSpawnInterval = 1) : base() {
+        public MainScene(float sceneWidth = GameRoot.DesiredWindowWidth * 2, float blockSpawnInterval = 1) : this() {
             this.blockSpawnInterval = blockSpawnInterval;
             SceneWidth = sceneWidth;
             blockSpawnTimer = blockSpawnInterval;
@@ -69,6 +92,11 @@ namespace MarshmallowAvalanche {
             SetUpWorldBounds(camBounds);
 
             gameOverlay = CreateEntity("game-overlay").AddComponent(new GameUIOverlay(score));
+
+            scoreLine = CreateEntity("score-line").AddComponent<PrototypeSpriteRenderer>();
+            scoreLine.Color = Color.Yellow;
+            scoreLine.SetWidth(60);
+            scoreLine.SetHeight(5);
         }
 
         public override void OnStart() {
@@ -86,31 +114,48 @@ namespace MarshmallowAvalanche {
 
         private void BlockSpawnerTick() {
             blockSpawnTimer -= Time.DeltaTime;
+            blockSpawnIncreaseTimer -= Time.DeltaTime;
+
             if (isSpawningBlocks && blockSpawnTimer < 0) {
                 blockSpawnTimer = blockSpawnInterval;
                 FallingBlock block = blockSpawner.SpawnBlock(250);
                 block?.SetBlockColor(GetRandomColor());
             }
+
+            if (isSpawningBlocks && blockSpawnIncreaseTimer < 0) {
+                blockSpawnInterval -= .005f;
+                blockSpawnInterval = System.Math.Max(.15f, blockSpawnInterval);
+                blockSpawnIncreaseTimer = blockSpawnIncreaseInterval;
+            }
         }
 
         private void UpdateScore() {
+            float marshmallowPosition = marshmallow.Bounds.Top;
+            float xPos = Camera.Bounds.Right - scoreLine.Width / 2;
             if (!haveSetStartingHeight) {
-                score.SetStartingHeight(marshmallow.Bounds.Top / 10);
+                score.SetStartingHeight(marshmallowPosition / 10f);
+                scoreLine.Transform.SetPosition(new Vector2(xPos, marshmallowPosition));
                 haveSetStartingHeight = true;
             } else {
-                score.UpdateScoreIfBetter(marshmallow.Bounds.Top / 10);
+                if (score.UpdateScoreIfBetter(marshmallowPosition / 10f)) {
+                    scoreLine.Transform.SetPosition(new Vector2(xPos, marshmallowPosition));
+                } else {
+                    scoreLine.Transform.SetPosition(new Vector2(xPos, scoreLine.Transform.Position.Y));
+                }
             }
         }
 
         private void RiseZone() {
-            if (!risingZone.IsRising) {
-                risingZoneDelay -= Time.DeltaTime;
-                if (risingZoneDelay < 0) {
-                    risingZone.SetCharacter(marshmallow);
-                    risingZone.Entity.Position = new Vector2(0, GameRoot.DesiredWindowHeight);
-                    risingZone.Collider.SetWidth(SceneWidth * 2);
-                    risingZone.BeginRising();
-                }
+            risingZoneTimer -= Time.DeltaTime;
+            if (!risingZone.IsRising && risingZoneTimer < 0) {
+                risingZone.SetCharacter(marshmallow);
+                risingZone.Entity.Position = new Vector2(0, GameRoot.DesiredWindowHeight);
+                risingZone.Collider.SetWidth(SceneWidth * 2);
+                risingZone.BeginRising();
+                risingZoneTimer = risingZoneRateIncreaseInterval;
+            } else if (risingZone.IsRising && risingZoneTimer < 0) {
+                risingZoneTimer = risingZoneRateIncreaseInterval;
+                risingZone.IncreaseRiseRate(.025f);
             }
         }
 

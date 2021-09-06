@@ -46,7 +46,6 @@ namespace MarshmallowAvalanche {
             this.character = character;
         }
 
-
         public void BeginRising() {
             if (Collider == null) {
                 Debug.Error("Cannot begin rising, this component has not been added to an entity");
@@ -64,6 +63,10 @@ namespace MarshmallowAvalanche {
 
         public void SetRiseRate(float rate) {
             riseRate = rate;
+        }
+
+        public void IncreaseRiseRate(float amount, float maxRate = 100f) {
+            riseRate = Math.Min(riseRate + amount, maxRate);
         }
 
         public void Update() {
