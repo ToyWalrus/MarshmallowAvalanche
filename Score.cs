@@ -6,7 +6,22 @@ using Nez;
 
 namespace MarshmallowAvalanche {
     public class Score {
-        public int TopScore { get; set; }
+        public float TopScore { get; set; }
+
+        [NonSerialized]
+        public float CurrentScore;
+        private float startingHeight;
+
+        public void SetStartingHeight(float position) {
+            startingHeight = position;
+            CurrentScore = 0;
+        }
+
+        public void UpdateScoreIfBetter(float newPos) {
+            CurrentScore = Math.Max(CurrentScore, startingHeight - newPos);
+            TopScore = Math.Max(TopScore, CurrentScore);
+        }
+
 
         #region Serialization
         private const string dirname = "MarshmallowAvalanche";
@@ -52,6 +67,14 @@ namespace MarshmallowAvalanche {
                     TopScore = 0
                 };
             }
+        }
+
+        public static void ResetTopScore() {
+            Score score = new Score()
+            {
+                TopScore = 0
+            };
+            score.SaveData();
         }
 
         public void SaveData() {

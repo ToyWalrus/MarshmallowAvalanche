@@ -12,6 +12,7 @@ namespace MarshmallowAvalanche {
         private LabelStyle labelStyle;
         private Skin buttonSkin;
         private Score score;
+        private bool displayingGameOverUI = false;
 
         public GameUIOverlay(Score score) {
             this.score = score;
@@ -40,12 +41,38 @@ namespace MarshmallowAvalanche {
                 DownFontColor = Color.White,
             });
 
-            labelStyle = new LabelStyle(font, Color.Red);
+            labelStyle = new LabelStyle(font, Color.Cyan);
             labelTable = Stage.AddElement(new Table());
             buttonTable = Stage.AddElement(new Table());
         }
 
+        public override void Update() {
+            base.Update();
+            if (displayingGameOverUI)
+                return;
+
+            labelTable.Clear();
+            labelTable.SetFillParent(true);
+            labelTable.Top().Left().PadTop(10).PadLeft(10);
+
+            LabelStyle style = new LabelStyle()
+            {
+                Font = labelStyle.Font,
+                FontColor = Color.WhiteSmoke,
+                FontScale = .6f,
+            };
+
+            Label topScoreLabel = new Label($"Top Score: {score.TopScore:F1}", style);
+            Label currentScoreLabel = new Label($"Score: {score.CurrentScore:F1}", style);
+
+            labelTable.Add(topScoreLabel).Left();
+            labelTable.Row().SetPadTop(10);
+            labelTable.Add(currentScoreLabel).Left();
+        }
+
         public void OnGameOver() {
+            displayingGameOverUI = true;
+
             score.SaveData();
 
             labelTable.Clear();

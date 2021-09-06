@@ -6,7 +6,7 @@ using Nez;
  * TODO:
  * Make blocks random colors from set list
  * Create marshmallow animated sprite
- * Record height
+ * Get crushed by blocks
  * Make liquid rise faster as you get higher
  * Add interesting background
  * Add sound (maybe music too?)
@@ -25,6 +25,7 @@ namespace MarshmallowAvalanche {
         private float blockSpawnTimer;
         private bool isSpawningBlocks = true;
         private bool isGameOver = false;
+        private bool haveSetStartingHeight = false;
         private Score score;
 
         public MainScene() : base() {
@@ -39,6 +40,10 @@ namespace MarshmallowAvalanche {
 
         public override void Initialize() {
             base.Initialize();
+
+            AddRenderer(new RenderLayerExcludeRenderer(0, new int[] { GameUIOverlay.RenderLayer }));
+            SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
+            ClearColor = Color.CornflowerBlue;
 
             score = Score.LoadData();
 
@@ -64,20 +69,40 @@ namespace MarshmallowAvalanche {
             SetUpWorldBounds(camBounds);
 
             gameOverlay = CreateEntity("game-overlay").AddComponent(new GameUIOverlay(score));
+        }
 
-            AddRenderer(new RenderLayerExcludeRenderer(0, new int[] { GameUIOverlay.RenderLayer }));
-            AddRenderer(new ScreenSpaceRenderer(1, new int[] { GameUIOverlay.RenderLayer })
-            {
-                Camera = Camera
-            });
-            SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
-            ClearColor = Color.CornflowerBlue;
+        public override void OnStart() {
+            base.OnStart();
+            AddRenderer(new ScreenSpaceRenderer(1, new int[] { GameUIOverlay.RenderLayer }));
         }
 
         public override void Update() {
             base.Update();
             BlockSpawnerTick();
+            UpdateScore();
+            RiseZone();
+            CheckForGameOver();
+        }
 
+        private void BlockSpawnerTick() {
+            blockSpawnTimer -= Time.DeltaTime;
+            if (isSpawningBlocks && blockSpawnTimer < 0) {
+                blockSpawnTimer = blockSpawnInterval;
+                FallingBlock block = blockSpawner.SpawnBlock(250);
+                block?.SetBlockColor(GetRandomColor());
+            }
+        }
+
+        private void UpdateScore() {
+            if (!haveSetStartingHeight) {
+                score.SetStartingHeight(marshmallow.Bounds.Top / 10);
+                haveSetStartingHeight = true;
+            } else {
+                score.UpdateScoreIfBetter(marshmallow.Bounds.Top / 10);
+            }
+        }
+
+        private void RiseZone() {
             if (!risingZone.IsRising) {
                 risingZoneDelay -= Time.DeltaTime;
                 if (risingZoneDelay < 0) {
@@ -87,7 +112,9 @@ namespace MarshmallowAvalanche {
                     risingZone.BeginRising();
                 }
             }
+        }
 
+        private void CheckForGameOver() {
             if (marshmallow.IsDead && !isGameOver) {
                 Camera.Entity.RemoveComponent<FollowCamera>();
                 gameOverlay.OnGameOver();
@@ -95,7 +122,6 @@ namespace MarshmallowAvalanche {
                 isGameOver = true;
             }
         }
-
 
         private void SetUpWorldBounds(CameraBounds camBounds) {
             int boundThickness = 10;
@@ -138,15 +164,6 @@ namespace MarshmallowAvalanche {
             //renderer.SetHeight(rect.Height);
 
             return wall;
-        }
-
-        private void BlockSpawnerTick() {
-            blockSpawnTimer -= Time.DeltaTime;
-            if (isSpawningBlocks && blockSpawnTimer < 0) {
-                blockSpawnTimer = blockSpawnInterval;
-                FallingBlock block = blockSpawner.SpawnBlock(250);
-                block?.SetBlockColor(GetRandomColor());
-            }
         }
 
         private Color GetRandomColor() {

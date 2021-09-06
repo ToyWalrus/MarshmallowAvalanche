@@ -11,7 +11,6 @@ namespace MarshmallowAvalanche {
             Nez.Console.DebugConsole.RenderScale = 2;
 
             Window.Title = "Marshmallow Avalanche";
-            Window.AllowUserResizing = true;
 
             Screen.SetSize(DesiredWindowWidth, DesiredWindowHeight);
 
