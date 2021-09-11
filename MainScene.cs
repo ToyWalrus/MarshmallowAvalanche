@@ -9,7 +9,6 @@ using Nez;
  * Make settings for adjusting rise rate & block spawn (maybe time scale?)
  * Add interesting background
  * Add sound (maybe music too?)
- * Remove blocks that have been fully consumed by rising zone
  */
 
 namespace MarshmallowAvalanche {
@@ -118,7 +117,10 @@ namespace MarshmallowAvalanche {
             if (isSpawningBlocks && blockSpawnTimer < 0) {
                 blockSpawnTimer = blockSpawnInterval;
                 FallingBlock block = blockSpawner.SpawnBlock(250);
-                block?.SetBlockColor(GetRandomColor());
+                if (block != null) {
+                    block.SetBlockColor(GetRandomColor());
+                    risingZone.RegisterSpawnedBlock(block);
+                }
             }
 
             if (isSpawningBlocks && blockSpawnIncreaseTimer < 0) {

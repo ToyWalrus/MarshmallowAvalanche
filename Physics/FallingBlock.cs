@@ -56,7 +56,6 @@ namespace MarshmallowAvalanche.Physics {
         public override void Update() {
             // Blocks will never move once grounded
             if (Grounded) {
-                SetEnabled(false);
                 return;
             }
             base.Update();
@@ -71,7 +70,10 @@ namespace MarshmallowAvalanche.Physics {
             Vector2 overlap = _collisionData.MinimumTranslationVector;
 
             if (overlap.Y > 0) {
-                if (other is FallingBlock otherBlock) {
+                if (other is StaticObject) {
+                    Grounded = true;
+                    _velocity.Y = 0;
+                } else if (other is FallingBlock otherBlock) {
                     // We only want to set this block to grounded if
                     // it is on a static object or another block that
                     // is also grounded

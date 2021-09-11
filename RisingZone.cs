@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using Nez;
 using Nez.Sprites;
 using Microsoft.Xna.Framework;
+using MarshmallowAvalanche.Physics;
 
 namespace MarshmallowAvalanche {
     public class RisingZone : Component, IUpdatable {
@@ -12,6 +14,7 @@ namespace MarshmallowAvalanche {
         private Character character;
         private PrototypeSpriteRenderer renderer;
         private SpriteAnimator waveAnimator;
+        private HashSet<FallingBlock> spawnedBlocks;
 
         public bool IsRising { get; private set; }
         public BoxCollider Collider { get; private set; }
@@ -26,6 +29,7 @@ namespace MarshmallowAvalanche {
 
             Collider.SetHeight(0);
             Collider.IsTrigger = true;
+            Collider.PhysicsLayer = (int) PhysicsLayers.Liquid;
 
             renderer = Entity.AddComponent<PrototypeSpriteRenderer>();
             renderer.Color = zoneColor;
@@ -40,6 +44,8 @@ namespace MarshmallowAvalanche {
             waveAnimator.AddAnimationsFromAtlas(waveAtlas);
             waveAnimator.RenderLayer = RenderLayer;
             waveAnimator.SetEnabled(false);
+
+            spawnedBlocks = new HashSet<FallingBlock>();
         }
 
         public void SetCharacter(Character character) {
@@ -69,6 +75,10 @@ namespace MarshmallowAvalanche {
             riseRate = Math.Min(riseRate + amount, maxRate);
         }
 
+        public void RegisterSpawnedBlock(FallingBlock block) {
+            spawnedBlocks.Add(block);
+        }
+
         public void Update() {
             if (!IsRising)
                 return;
@@ -80,6 +90,7 @@ namespace MarshmallowAvalanche {
 
             UpdateRenderer();
             CheckForCharacterOverlap();
+            CheckForBlockOverlap();
         }
 
         private void CheckForCharacterOverlap() {
@@ -102,6 +113,18 @@ namespace MarshmallowAvalanche {
             } else {
                 character.IsBeingDissolved = false;
             }
+        }
+
+        private void CheckForBlockOverlap() {
+            float cutoffPosition = Collider.Bounds.Top;
+            HashSet<FallingBlock> toRemove = new HashSet<FallingBlock>();
+            foreach (FallingBlock block in spawnedBlocks) {
+                if (!block.Entity.IsDestroyed && block.HasComponent<Collider>() && block.Bounds.Top > cutoffPosition) {
+                    toRemove.Add(block);
+                    block.Entity.Destroy();
+                }
+            }
+            spawnedBlocks.RemoveWhere((block) => toRemove.Contains(block));
         }
 
         private void UpdateRenderer() {
