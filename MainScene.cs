@@ -6,7 +6,6 @@ using Nez;
  * TODO:
  * Make blocks random colors from set list
  * Create marshmallow animated sprite
- * Get crushed by blocks
  * Make settings for adjusting rise rate & block spawn (maybe time scale?)
  * Add interesting background
  * Add sound (maybe music too?)
@@ -169,7 +168,7 @@ namespace MarshmallowAvalanche {
         }
 
         private void SetUpWorldBounds(CameraBounds camBounds) {
-            int boundThickness = 10;
+            int boundThickness = 50;
             CreateWall(new RectangleF(
                 camBounds.MinX,
                 camBounds.MinY,

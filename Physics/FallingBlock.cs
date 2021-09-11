@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Nez;
 using Nez.Sprites;
 using Nez.Textures;
@@ -8,7 +9,8 @@ namespace MarshmallowAvalanche.Physics {
         private SpriteRenderer sr;
         private Color savedColor;
 
-        public override float MaxFallSpeed {
+        public override float MaxFallSpeed
+        {
             get => base.MaxFallSpeed;
             set {
                 _velocity.Y = value;
@@ -24,8 +26,8 @@ namespace MarshmallowAvalanche.Physics {
 
         public override void OnAddedToEntity() {
             base.OnAddedToEntity();
-            Collider.PhysicsLayer = (int)PhysicsLayers.Block;
-            Collider.CollidesWithLayers = (int)(PhysicsLayers.Block | PhysicsLayers.Static);
+            Collider.PhysicsLayer = (int) PhysicsLayers.Block;
+            Collider.CollidesWithLayers = (int) (PhysicsLayers.Block | PhysicsLayers.Marshmallow | PhysicsLayers.Static);
 
             sr = Entity.GetComponent<SpriteRenderer>();
             if (sr == null) {
@@ -63,16 +65,40 @@ namespace MarshmallowAvalanche.Physics {
         public override void ResetCollisionStatus() { }
 
         public override void SetTouchingBorder(PhysicsObject other) {
-            base.SetTouchingBorder(other);
+            if (other == null) {
+                return;
+            }
+            Vector2 overlap = _collisionData.MinimumTranslationVector;
 
-            if (Grounded) {
-                // We only want to set this block to grounded if
-                // it is on a static object or another block that
-                // is also grounded
+            if (overlap.Y > 0) {
                 if (other is FallingBlock otherBlock) {
+                    // We only want to set this block to grounded if
+                    // it is on a static object or another block that
+                    // is also grounded
+
                     Grounded = otherBlock.Grounded;
+                    if (Grounded && _velocity.Y > 0) {
+                        _velocity.Y = 0;
+                    }
+                } else if (other is Character marshmallow && marshmallow.Grounded) {
+                    // Squash that pesky marshmallow!
+                    PrototypeSpriteRenderer characterRenderer = marshmallow.GetComponent<PrototypeSpriteRenderer>();
+
+                    float overlapAmount = MathF.Abs(overlap.Y);
+                    float newHeight = marshmallow.Bounds.Height - overlapAmount;
+
+                    marshmallow.Collider.SetHeight(newHeight);
+                    characterRenderer.SetHeight(newHeight);
+                    characterRenderer.SetOriginNormalized(new Vector2(.5f, .5f));
+                    marshmallow.Entity.Position = new Vector2(marshmallow.Entity.Position.X, Collider.Bounds.Bottom + newHeight / 2);
+
+                    if (marshmallow.IsDead) {
+                        _velocity.Y = 0;
+                        Grounded = true;
+                    }
                 }
             }
+
         }
     }
 }
