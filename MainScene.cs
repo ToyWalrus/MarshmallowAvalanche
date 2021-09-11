@@ -6,6 +6,7 @@ using Nez;
  * TODO:
  * Make blocks random colors from set list
  * Make settings for adjusting rise rate & block spawn (maybe time scale?)
+ * Adjust the rising rate more smartly
  * Add interesting background
  * Add sound (maybe music too?)
  */
@@ -28,14 +29,16 @@ namespace MarshmallowAvalanche {
         // The delay between the spawn of blocks
         private float blockSpawnInterval = 1f;
 
+        private float blockFallSpeed = 200;
+
         // The timer to count down the spawn interval
         private float blockSpawnTimer;
 
         // The delay before the zone starts rising at the start of the game
-        private readonly float risingZoneDelay = 6f;
+        private readonly float risingZoneDelay = 7f;
 
         // How often the rate of the rising zone increases
-        private readonly float risingZoneRateIncreaseInterval = 3f;
+        private readonly float risingZoneRateIncreaseInterval = 1.5f;
 
         // The timer to count down the delay for the rising zone
         private float risingZoneTimer;
@@ -115,7 +118,7 @@ namespace MarshmallowAvalanche {
 
             if (isSpawningBlocks && blockSpawnTimer < 0) {
                 blockSpawnTimer = blockSpawnInterval;
-                FallingBlock block = blockSpawner.SpawnBlock(250);
+                FallingBlock block = blockSpawner.SpawnBlock(blockFallSpeed);
                 if (block != null) {
                     block.SetBlockColor(GetRandomColor());
                     risingZone.RegisterSpawnedBlock(block);
@@ -155,7 +158,7 @@ namespace MarshmallowAvalanche {
                 risingZoneTimer = risingZoneRateIncreaseInterval;
             } else if (risingZone.IsRising && risingZoneTimer < 0) {
                 risingZoneTimer = risingZoneRateIncreaseInterval;
-                risingZone.IncreaseRiseRate(.025f);
+                risingZone.IncreaseRiseRate(.4f);
             }
         }
 
