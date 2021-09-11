@@ -98,25 +98,14 @@ namespace MarshmallowAvalanche {
                 return;
 
             BoxCollider characterCollider = character.Collider;
-            if (characterCollider.Height > 0 && Collider.CollidesWith(characterCollider, out _)) {
-                PrototypeSpriteRenderer characterRenderer = character.GetComponent<PrototypeSpriteRenderer>();
-
+            if (!character.IsDead && Collider.CollidesWith(characterCollider, out _)) {
                 float overlapAmount = MathF.Abs(MathF.Max(characterCollider.Bounds.Bottom - Collider.Bounds.Top, 0));
-                float newHeight = characterCollider.Height - overlapAmount;
-
-                characterCollider.SetHeight(newHeight);
-                characterRenderer.SetHeight(newHeight);
-                characterRenderer.SetOriginNormalized(new Vector2(.5f, .5f));
-                character.Entity.Position = new Vector2(character.Entity.Position.X, Collider.Bounds.Top - newHeight / 2);
-
-                character.IsBeingDissolved = true;
-            } else {
-                character.IsBeingDissolved = false;
+                character.GetDissolved(overlapAmount, Collider.Bounds.Top);
             }
         }
 
         private void CheckForBlockOverlap() {
-            float cutoffPosition = Collider.Bounds.Top;
+            float cutoffPosition = Collider.Bounds.Top + 10; // buffer the cutoff a little bit
             HashSet<FallingBlock> toRemove = new HashSet<FallingBlock>();
             foreach (FallingBlock block in spawnedBlocks) {
                 if (!block.Entity.IsDestroyed && block.HasComponent<Collider>() && block.Bounds.Top > cutoffPosition) {

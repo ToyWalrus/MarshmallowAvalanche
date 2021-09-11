@@ -20,7 +20,7 @@ namespace MarshmallowAvalanche {
 
         // The time before the input kicks in again to
         // steer back to wall
-        private readonly float wallJumpGracePeriod = .1f;
+        private readonly float wallJumpGracePeriod = .125f;
         private float timeSinceRightWallJump = 0;
         private float timeSinceLeftWallJump = 0;
 
@@ -30,33 +30,39 @@ namespace MarshmallowAvalanche {
         public float SlideSpeed { get; set; }
 
         public bool IsBeingDissolved { get; set; }
+        public bool IsBeingCrushed { get; set; }
+
+        private MarshmallowRenderer renderer;
 
         public Character(Vector2 size) : base(size) {
-            JumpSpeed = 500;
+            JumpSpeed = 600;
             GroundMoveSpeed = 550;
             AirMoveSpeed = GroundMoveSpeed * .8f;
             SlideSpeed = GroundMoveSpeed / 4;
             IsBeingDissolved = false;
+            IsBeingCrushed = false;
 
             overriddenGravityModifier = float.NaN;
 
             inputKeyMap = new Dictionary<CharacterInput, ICollection<Keys>> {
-                { CharacterInput.Left, new HashSet<Keys> { Keys.Left, Keys.A }},
-                { CharacterInput.Right, new HashSet<Keys> { Keys.Right, Keys.D }},
-                { CharacterInput.Jump, new HashSet<Keys> { Keys.Up, Keys.Space }}
+                { CharacterInput.Left, new HashSet<Keys> { Keys.Left, /*Keys.A*/ }},
+                { CharacterInput.Right, new HashSet<Keys> { Keys.Right, /*Keys.D*/ }},
+                { CharacterInput.Jump, new HashSet<Keys> { Keys.Up, /*Keys.Space*/ }}
             };
         }
 
-        public CharacterState State {
+        public CharacterState State
+        {
             get {
-                if (!Grounded) {
-                    if (Velocity.Y > 0 && (OnLeftWall || wasOnLeftWall || OnRightWall || wasOnRightWall)) {
+                bool againstWall = OnLeftWall || wasOnLeftWall || OnRightWall || wasOnRightWall;
+                if (!Grounded && !wasOnGround) {
+                    if (Velocity.Y > 0 && againstWall) {
                         return CharacterState.Sliding;
                     } else if (Velocity.Y != 0) {
                         return CharacterState.Jumping;
                     }
                 }
-                if (Velocity.X != 0) {
+                if (Velocity.X != 0 && !againstWall) {
                     return CharacterState.Moving;
                 }
                 return CharacterState.Idle;
@@ -65,13 +71,10 @@ namespace MarshmallowAvalanche {
 
         public override void OnAddedToEntity() {
             base.OnAddedToEntity();
-            Collider.PhysicsLayer = (int)PhysicsLayers.Marshmallow;
-            Collider.CollidesWithLayers = (int)(PhysicsLayers.Block | PhysicsLayers.Static);
+            Collider.PhysicsLayer = (int) PhysicsLayers.Marshmallow;
+            Collider.CollidesWithLayers = (int) (PhysicsLayers.Block | PhysicsLayers.Static);
 
-            var renderer = Entity.AddComponent<PrototypeSpriteRenderer>();
-            renderer.Color = Color.White;
-            renderer.SetHeight(Collider.Height);
-            renderer.SetWidth(Collider.Width);
+            renderer = Entity.AddComponent<MarshmallowRenderer>();
         }
 
         public override float GetGravityModifier() {
@@ -81,6 +84,25 @@ namespace MarshmallowAvalanche {
             return base.GetGravityModifier();
         }
 
+        public void GetCrushed(float crushAmount, float blockBottomPosition) {
+            float newHeight = Bounds.Height - crushAmount;
+
+            Collider.SetHeight(newHeight);
+            renderer.SetHeight(newHeight);
+            renderer.SetOriginNormalized(new Vector2(.5f, .5f));
+            Entity.Position = new Vector2(Entity.Position.X, blockBottomPosition + newHeight / 2);
+            IsBeingCrushed = true;
+        }
+
+        public void GetDissolved(float disolveAmount, float liquidPosition) {
+            float newHeight = Bounds.Height - disolveAmount;
+
+            Collider.SetHeight(newHeight);
+            renderer.SetHeight(newHeight);
+            renderer.SetOriginNormalized(new Vector2(.5f, .5f));
+            Entity.Position = new Vector2(Entity.Position.X, liquidPosition - newHeight / 2);
+            IsBeingDissolved = true;
+        }
 
         public override void Update() {
             if (IsDead) {
@@ -96,7 +118,6 @@ namespace MarshmallowAvalanche {
             UpdateTimers();
             UpdateFromInput();
 
-
             if (!Grounded && wasOnGround) {
                 ticksSinceLeavingGround++;
                 if (ticksSinceLeavingGround > inputGracePeriod) {
@@ -109,8 +130,12 @@ namespace MarshmallowAvalanche {
             }
 
             base.Update();
-
             MatchFallingBlockVelocity();
+
+            renderer.UpdateCharacterState(State, Math.Sign(_velocity.X), IsBeingCrushed);
+
+            IsBeingDissolved = false;
+            IsBeingCrushed = false;
         }
 
         protected override float GetDirectionalSpeedModifier() {
@@ -166,10 +191,10 @@ namespace MarshmallowAvalanche {
 
         private void CheckForWallInteraction() {
             // Don't allow sliding or wall jumping from static objects
-            bool isSliding = State == CharacterState.Sliding && 
+            bool isSliding = State == CharacterState.Sliding &&
                 !Flags.IsFlagSet(
-                    _collisionData.Collider?.PhysicsLayer ?? _previousFrameCollisionData.Collider.PhysicsLayer, 
-                    (int)PhysicsLayers.Static
+                    _collisionData.Collider?.PhysicsLayer ?? _previousFrameCollisionData.Collider.PhysicsLayer,
+                    (int) PhysicsLayers.Static
                 );
 
             bool isOnLeftWall = KeyDown(CharacterInput.Left) && isSliding;
@@ -223,21 +248,24 @@ namespace MarshmallowAvalanche {
 
         private bool KeyReleased(CharacterInput input) {
             foreach (Keys key in inputKeyMap[input]) {
-                if (Input.IsKeyReleased(key)) return true;
+                if (Input.IsKeyReleased(key))
+                    return true;
             }
             return false;
         }
 
         private bool KeyPressed(CharacterInput input) {
             foreach (Keys key in inputKeyMap[input]) {
-                if (Input.IsKeyPressed(key)) return true;
+                if (Input.IsKeyPressed(key))
+                    return true;
             }
             return false;
         }
 
         private bool KeyDown(CharacterInput input) {
             foreach (Keys key in inputKeyMap[input]) {
-                if (Input.IsKeyDown(key)) return true;
+                if (Input.IsKeyDown(key))
+                    return true;
             }
             return false;
         }

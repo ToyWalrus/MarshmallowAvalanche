@@ -6,6 +6,7 @@ using Nez.Textures;
 
 namespace MarshmallowAvalanche.Physics {
     public class FallingBlock : MovingObject {
+        public const int RenderLayer = 10;
         private SpriteRenderer sr;
         private Color savedColor;
 
@@ -34,6 +35,7 @@ namespace MarshmallowAvalanche.Physics {
                 sr = Entity.AddComponent<SpriteRenderer>();
             }
             sr.Sprite = new Sprite(Entity.Scene.Content.LoadTexture("blocks/FallingBlock"));
+            sr.RenderLayer = RenderLayer;
 
             Rectangle spriteBounds = sr.Sprite.Texture2D.Bounds;
             float scale = Bounds.Width / spriteBounds.Width;
@@ -84,15 +86,8 @@ namespace MarshmallowAvalanche.Physics {
                     }
                 } else if (other is Character marshmallow && marshmallow.Grounded) {
                     // Squash that pesky marshmallow!
-                    PrototypeSpriteRenderer characterRenderer = marshmallow.GetComponent<PrototypeSpriteRenderer>();
-
                     float overlapAmount = MathF.Abs(overlap.Y);
-                    float newHeight = marshmallow.Bounds.Height - overlapAmount;
-
-                    marshmallow.Collider.SetHeight(newHeight);
-                    characterRenderer.SetHeight(newHeight);
-                    characterRenderer.SetOriginNormalized(new Vector2(.5f, .5f));
-                    marshmallow.Entity.Position = new Vector2(marshmallow.Entity.Position.X, Collider.Bounds.Bottom + newHeight / 2);
+                    marshmallow.GetCrushed(overlapAmount, Collider.Bounds.Bottom);
 
                     if (marshmallow.IsDead) {
                         _velocity.Y = 0;

@@ -5,7 +5,6 @@ using Nez;
 /* 
  * TODO:
  * Make blocks random colors from set list
- * Create marshmallow animated sprite
  * Make settings for adjusting rise rate & block spawn (maybe time scale?)
  * Add interesting background
  * Add sound (maybe music too?)
@@ -33,7 +32,7 @@ namespace MarshmallowAvalanche {
         private float blockSpawnTimer;
 
         // The delay before the zone starts rising at the start of the game
-        private readonly float risingZoneDelay = 5f;
+        private readonly float risingZoneDelay = 6f;
 
         // How often the rate of the rising zone increases
         private readonly float risingZoneRateIncreaseInterval = 3f;
@@ -45,7 +44,7 @@ namespace MarshmallowAvalanche {
         private bool isGameOver = false;
         private bool haveSetStartingHeight = false;
         private Score score;
-        private PrototypeSpriteRenderer scoreLine;
+        //private PrototypeSpriteRenderer scoreLine;
 
         public MainScene() : base() {
             blockSpawnIncreaseTimer = blockSpawnIncreaseInterval;
@@ -68,7 +67,7 @@ namespace MarshmallowAvalanche {
 
             score = Score.LoadData();
 
-            Vector2 marshmallowSize = new Vector2(30, 60);
+            Vector2 marshmallowSize = new Vector2(28, 60);
             marshmallow = CreateEntity("marshmallow", new Vector2(0, GameRoot.DesiredWindowHeight - marshmallowSize.Y * 1.5f))
                 .AddComponent(new Character(marshmallowSize));
             marshmallow.SetGravityModifier(4);
@@ -91,10 +90,10 @@ namespace MarshmallowAvalanche {
 
             gameOverlay = CreateEntity("game-overlay").AddComponent(new GameUIOverlay(score));
 
-            scoreLine = CreateEntity("score-line").AddComponent<PrototypeSpriteRenderer>();
-            scoreLine.Color = Color.Yellow;
-            scoreLine.SetWidth(60);
-            scoreLine.SetHeight(5);
+            //scoreLine = CreateEntity("score-line").AddComponent<PrototypeSpriteRenderer>();
+            //scoreLine.Color = Color.Yellow;
+            //scoreLine.SetWidth(60);
+            //scoreLine.SetHeight(5);
         }
 
         public override void OnStart() {
@@ -132,16 +131,16 @@ namespace MarshmallowAvalanche {
 
         private void UpdateScore() {
             float marshmallowPosition = marshmallow.Bounds.Top;
-            float xPos = Camera.Bounds.Right - scoreLine.Width / 2;
+            //float xPos = Camera.Bounds.Right - scoreLine.Width / 2;
             if (!haveSetStartingHeight) {
                 score.SetStartingHeight(marshmallowPosition / 10f);
-                scoreLine.Transform.SetPosition(new Vector2(xPos, marshmallowPosition));
+                //scoreLine.Transform.SetPosition(new Vector2(xPos, marshmallowPosition));
                 haveSetStartingHeight = true;
             } else {
                 if (score.UpdateScoreIfBetter(marshmallowPosition / 10f)) {
-                    scoreLine.Transform.SetPosition(new Vector2(xPos, marshmallowPosition));
+                    //    scoreLine.Transform.SetPosition(new Vector2(xPos, marshmallowPosition));
                 } else {
-                    scoreLine.Transform.SetPosition(new Vector2(xPos, scoreLine.Transform.Position.Y));
+                    //    scoreLine.Transform.SetPosition(new Vector2(xPos, scoreLine.Transform.Position.Y));
                 }
             }
         }
