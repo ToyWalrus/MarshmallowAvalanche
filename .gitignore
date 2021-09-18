@@ -341,3 +341,4 @@ healthchecksdb
 
 /Content/background/*
 !/Content/background/full-background*
+!/Content/background/ground

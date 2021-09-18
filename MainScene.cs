@@ -8,7 +8,6 @@ using Nez.Sprites;
  * Make blocks random colors from set list
  * Make settings for adjusting rise rate & block spawn (maybe time scale?)
  * Adjust the rising rate more smartly
- * Add interesting background
  * Add sound (maybe music too?)
  */
 
@@ -49,7 +48,7 @@ namespace MarshmallowAvalanche {
         private bool isGameOver = false;
         private bool haveSetStartingHeight = false;
         private Score score;
-        private SpriteRenderer background;
+        private ParallaxEffect background;
         //private PrototypeSpriteRenderer scoreLine;
 
         public MainScene() : base() {
@@ -69,7 +68,7 @@ namespace MarshmallowAvalanche {
 
             AddRenderer(new RenderLayerExcludeRenderer(0, new int[] { GameUIOverlay.RenderLayer }));
             SetDesignResolution(GameRoot.DesiredWindowWidth, GameRoot.DesiredWindowHeight, SceneResolutionPolicy.ShowAll);
-            ClearColor = Color.CornflowerBlue;
+            ClearColor = Color.Black;
 
             score = Score.LoadData();
 
@@ -96,10 +95,17 @@ namespace MarshmallowAvalanche {
 
             gameOverlay = CreateEntity("game-overlay").AddComponent(new GameUIOverlay(score));
 
-            background = CreateEntity("background").AddComponent(new SpriteRenderer(Content.LoadTexture("background/full-background")));
+            background = CreateEntity("background").AddComponent(new ParallaxEffect(Content.LoadTexture("background/full-background"), new Vector2(20, 30)));
             background.RenderLayer = BackgroundRenderLayer;
             background.OriginNormalized = new Vector2(.5f, 1);
+            background.Transform.Scale = new Vector2(1.65f, 1.65f);
             background.Transform.Position = new Vector2(0, GameRoot.DesiredWindowHeight);
+            
+            SpriteRenderer ground = CreateEntity("ground-layer").AddComponent(new SpriteRenderer(Content.LoadTexture("background/ground")));
+            ground.RenderLayer = BackgroundRenderLayer - 1;
+            ground.OriginNormalized = new Vector2(.5f, 1);
+            ground.Transform.Scale = new Vector2(1.5f, 1);
+            ground.Transform.Position = background.Transform.Position;
 
             //scoreLine = CreateEntity("score-line").AddComponent<PrototypeSpriteRenderer>();
             //scoreLine.Color = Color.Yellow;
@@ -134,7 +140,7 @@ namespace MarshmallowAvalanche {
             }
 
             if (isSpawningBlocks && blockSpawnIncreaseTimer < 0) {
-                blockSpawnInterval -= .005f;
+                blockSpawnInterval -= .0075f;
                 blockSpawnInterval = System.Math.Max(.15f, blockSpawnInterval);
                 blockSpawnIncreaseTimer = blockSpawnIncreaseInterval;
             }
