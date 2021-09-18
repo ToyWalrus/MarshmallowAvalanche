@@ -8,7 +8,7 @@ using Nez.Sprites;
  * Make blocks random colors from set list
  * Make settings for adjusting rise rate & block spawn (maybe time scale?)
  * Adjust the rising rate more smartly
- * Add sound (maybe music too?)
+ * Add sound effects
  */
 
 namespace MarshmallowAvalanche {
@@ -106,6 +106,10 @@ namespace MarshmallowAvalanche {
             ground.OriginNormalized = new Vector2(.5f, 1);
             ground.Transform.Scale = new Vector2(1.5f, 1);
             ground.Transform.Position = background.Transform.Position;
+
+            // Music from Unity PlatformerMicrogame project
+            var music = Content.LoadSoundEffect("Music");
+            music.Play();
 
             //scoreLine = CreateEntity("score-line").AddComponent<PrototypeSpriteRenderer>();
             //scoreLine.Color = Color.Yellow;

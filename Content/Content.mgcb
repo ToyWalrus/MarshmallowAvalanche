@@ -85,6 +85,12 @@
 /processorParam:TextureFormat=Color
 /build:marshmallow/wall.png
 
+#begin Music.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Music.wav
+
 #begin ui/ButtonTexture.png
 /importer:TextureImporter
 /processor:TextureProcessor
