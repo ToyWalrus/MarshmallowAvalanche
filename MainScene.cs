@@ -1,6 +1,7 @@
 ﻿using MarshmallowAvalanche.Physics;
 using Microsoft.Xna.Framework;
 using Nez;
+using Nez.Sprites;
 
 /* 
  * TODO:
@@ -14,6 +15,7 @@ using Nez;
 namespace MarshmallowAvalanche {
     public class MainScene : Scene {
         public readonly float SceneWidth = GameRoot.DesiredWindowWidth * 2;
+        public const int BackgroundRenderLayer = 100;
 
         private BlockSpawner blockSpawner;
         private Character marshmallow;
@@ -47,6 +49,7 @@ namespace MarshmallowAvalanche {
         private bool isGameOver = false;
         private bool haveSetStartingHeight = false;
         private Score score;
+        private SpriteRenderer background;
         //private PrototypeSpriteRenderer scoreLine;
 
         public MainScene() : base() {
@@ -92,6 +95,11 @@ namespace MarshmallowAvalanche {
             SetUpWorldBounds(camBounds);
 
             gameOverlay = CreateEntity("game-overlay").AddComponent(new GameUIOverlay(score));
+
+            background = CreateEntity("background").AddComponent(new SpriteRenderer(Content.LoadTexture("background/full-background")));
+            background.RenderLayer = BackgroundRenderLayer;
+            background.OriginNormalized = new Vector2(.5f, 1);
+            background.Transform.Position = new Vector2(0, GameRoot.DesiredWindowHeight);
 
             //scoreLine = CreateEntity("score-line").AddComponent<PrototypeSpriteRenderer>();
             //scoreLine.Color = Color.Yellow;
@@ -172,12 +180,12 @@ namespace MarshmallowAvalanche {
         }
 
         private void SetUpWorldBounds(CameraBounds camBounds) {
-            int boundThickness = 50;
+            int boundThickness = 45;
             CreateWall(new RectangleF(
                 camBounds.MinX,
-                camBounds.MinY,
+                camBounds.MinY - boundThickness / 2,
                 camBounds.MaxX - camBounds.MinX,
-                boundThickness
+                boundThickness * 2
                 ),
             "bot-wall"
             );
