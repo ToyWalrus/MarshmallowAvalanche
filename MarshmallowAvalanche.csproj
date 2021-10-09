@@ -27,4 +27,21 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NezFramework\Nez.Portable\Nez.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Content\Marshmallow.fnt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Marshmallow_0.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\wave\wave.atlas">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\wave\wave.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

@@ -13,14 +13,7 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin DefaultFont.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:DefaultFont.spritefont
-
-#begin FallingBlock.png
+#begin background/full-background.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -30,5 +23,107 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:FallingBlock.png
+/build:background/full-background.png
+
+#begin background/ground.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:background/ground.png
+
+#begin blocks/FallingBlock.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:blocks/FallingBlock.png
+
+#begin marshmallow/crushed.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:marshmallow/crushed.png
+
+#begin marshmallow/standing.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:marshmallow/standing.png
+
+#begin marshmallow/wall.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:marshmallow/wall.png
+
+#begin Music.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Music.wav
+
+#begin ui/ButtonTexture.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ui/ButtonTexture.png
+
+#begin ui/ButtonTexture-Hover.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ui/ButtonTexture-Hover.png
+
+#begin ui/ButtonTexture-Pressed.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ui/ButtonTexture-Pressed.png
 

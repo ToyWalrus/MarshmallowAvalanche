@@ -1,24 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MarshmallowAvalanche.Physics;
-using MarshmallowAvalanche.Utils;
+using Nez;
 
 namespace MarshmallowAvalanche {
     public class Character : MovingObject {
-        public enum Input {
+        public enum CharacterInput {
             Left = 0,
             Right = 1,
             Jump = 2,
         }
 
-        private readonly bool[] frameInput;
-        private readonly bool[] prevFrameInput;
+        public bool IsDead => Collider.Height <= .25f;
+
         private float overriddenGravityModifier;
+        private readonly Dictionary<CharacterInput, ICollection<Keys>> inputKeyMap;
 
         // The time before the input kicks in again to
         // steer back to wall
-        private readonly float wallJumpGracePeriod = .1f;
+        private readonly float wallJumpGracePeriod = .125f;
         private float timeSinceRightWallJump = 0;
         private float timeSinceLeftWallJump = 0;
 
@@ -27,38 +29,52 @@ namespace MarshmallowAvalanche {
         public float AirMoveSpeed { get; set; }
         public float SlideSpeed { get; set; }
 
-        public override string Tag {
-            get;
-            protected set;
-        }
+        public bool IsBeingDissolved { get; set; }
+        public bool IsBeingCrushed { get; set; }
 
-        public Character(Vector2 position, Vector2 size, string tag = "Player") : base(position, size) {
-            JumpSpeed = 800;
+        private MarshmallowRenderer renderer;
+
+        public Character(Vector2 size) : base(size) {
+            JumpSpeed = 600;
             GroundMoveSpeed = 550;
             AirMoveSpeed = GroundMoveSpeed * .8f;
             SlideSpeed = GroundMoveSpeed / 4;
-            Tag = tag;
-
-            frameInput = new bool[Enum.GetValues(typeof(Input)).Length];
-            prevFrameInput = new bool[frameInput.Length];
+            IsBeingDissolved = false;
+            IsBeingCrushed = false;
 
             overriddenGravityModifier = float.NaN;
+
+            inputKeyMap = new Dictionary<CharacterInput, ICollection<Keys>> {
+                { CharacterInput.Left, new HashSet<Keys> { Keys.Left, /*Keys.A*/ }},
+                { CharacterInput.Right, new HashSet<Keys> { Keys.Right, /*Keys.D*/ }},
+                { CharacterInput.Jump, new HashSet<Keys> { Keys.Up, /*Keys.Space*/ }}
+            };
         }
 
-        public CharacterState State {
+        public CharacterState State
+        {
             get {
-                if (!Grounded) {
-                    if (Velocity.Y > 0 && (OnLeftWall || wasOnLeftWall || OnRightWall || wasOnRightWall)) {
+                bool againstWall = OnLeftWall || wasOnLeftWall || OnRightWall || wasOnRightWall;
+                if (!Grounded && !wasOnGround) {
+                    if (Velocity.Y > 0 && againstWall) {
                         return CharacterState.Sliding;
                     } else if (Velocity.Y != 0) {
                         return CharacterState.Jumping;
                     }
                 }
-                if (Velocity.X != 0) {
+                if (Velocity.X != 0 && !againstWall) {
                     return CharacterState.Moving;
                 }
                 return CharacterState.Idle;
             }
+        }
+
+        public override void OnAddedToEntity() {
+            base.OnAddedToEntity();
+            Collider.PhysicsLayer = (int) PhysicsLayers.Marshmallow;
+            Collider.CollidesWithLayers = (int) (PhysicsLayers.Block | PhysicsLayers.Static);
+
+            renderer = Entity.AddComponent<MarshmallowRenderer>();
         }
 
         public override float GetGravityModifier() {
@@ -68,15 +84,39 @@ namespace MarshmallowAvalanche {
             return base.GetGravityModifier();
         }
 
-        public void UpdateKeyboardState(KeyboardState keyboard) {
-            frameInput[(int)Input.Left] = keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A);
-            frameInput[(int)Input.Right] = keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D);
-            frameInput[(int)Input.Jump] = keyboard.IsKeyDown(Keys.Up) || keyboard.IsKeyDown(Keys.W);
+        public void GetCrushed(float crushAmount, float blockBottomPosition) {
+            float newHeight = Bounds.Height - crushAmount;
+
+            Collider.SetHeight(newHeight);
+            renderer.SetHeight(newHeight);
+            renderer.SetOriginNormalized(new Vector2(.5f, .5f));
+            Entity.Position = new Vector2(Entity.Position.X, blockBottomPosition + newHeight / 2);
+            IsBeingCrushed = true;
         }
 
-        public override void Update(GameTime gt) {
-            UpdateTimers(gt);
-            UpdateFromInputs(gt);
+        public void GetDissolved(float disolveAmount, float liquidPosition) {
+            float newHeight = Bounds.Height - disolveAmount;
+
+            Collider.SetHeight(newHeight);
+            renderer.SetHeight(newHeight);
+            renderer.SetOriginNormalized(new Vector2(.5f, .5f));
+            Entity.Position = new Vector2(Entity.Position.X, liquidPosition - newHeight / 2);
+            IsBeingDissolved = true;
+        }
+
+        public override void Update() {
+            if (IsDead) {
+                SetEnabled(false);
+                return;
+            }
+
+            float offsetGravity = -gravityModifier * GravityConst * GetDirectionalSpeedModifier();
+            if (IsBeingDissolved && Velocity.Y > offsetGravity) {
+                _velocity.Y = offsetGravity;
+            }
+
+            UpdateTimers();
+            UpdateFromInput();
 
             if (!Grounded && wasOnGround) {
                 ticksSinceLeavingGround++;
@@ -89,8 +129,13 @@ namespace MarshmallowAvalanche {
                 ticksSinceLeavingGround = 0;
             }
 
-            base.Update(gt);
-            UpdatePreviousInputs();
+            base.Update();
+            MatchFallingBlockVelocity();
+
+            renderer.UpdateCharacterState(State, Math.Sign(_velocity.X), IsBeingCrushed);
+
+            IsBeingDissolved = false;
+            IsBeingCrushed = false;
         }
 
         protected override float GetDirectionalSpeedModifier() {
@@ -103,27 +148,37 @@ namespace MarshmallowAvalanche {
             return directionalSpeedModifier;
         }
 
-        private void UpdateFromInputs(GameTime gt) {
-            float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
+        private void UpdateFromInput() {
+            float deltaTime = Time.DeltaTime;
 
-            if (KeyPressed(Input.Jump) && Grounded) {
-                _velocity.Y = -JumpSpeed;
-            } else if (KeyReleased(Input.Jump) && _velocity.Y < 0) {
+            if (KeyPressed(CharacterInput.Jump)) {
+                if (Grounded || wasOnGround) {
+                    _velocity.Y = -JumpSpeed;
+                } else if (IsBeingDissolved) {
+                    // Allow for tiny hops in liquid
+                    _velocity.Y = -JumpSpeed / 1.5f;
+                    IsBeingDissolved = false;
+                }
+            } else if (KeyReleased(CharacterInput.Jump) && _velocity.Y < 0) {
                 _velocity.Y /= 2;
             }
 
             float moveSpeed = Grounded ? GroundMoveSpeed : AirMoveSpeed;
-            float delta = moveSpeed * deltaTime * 100;
+            if (IsBeingDissolved) {
+                moveSpeed -= moveSpeed / 1.5f;
+            }
 
-            if (KeyState(Input.Left) == KeyState(Input.Right)) {
+            float delta = moveSpeed * deltaTime + 100;
+
+            if (KeyDown(CharacterInput.Left) == KeyDown(CharacterInput.Right)) {
                 _velocity.X = ConvergeToZero(_velocity.X, deltaTime, moveSpeed);
-            } else if (KeyState(Input.Left) && timeSinceLeftWallJump <= 0) {
+            } else if (KeyDown(CharacterInput.Left) && timeSinceLeftWallJump <= 0) {
                 if (OnLeftWall) {
                     _velocity.X = 0;
                 } else {
                     _velocity.X = MathF.Max(-moveSpeed, _velocity.X - delta);
                 }
-            } else if (KeyState(Input.Right) && timeSinceRightWallJump <= 0) {
+            } else if (KeyDown(CharacterInput.Right) && timeSinceRightWallJump <= 0) {
                 if (OnRightWall) {
                     _velocity.X = 0;
                 } else {
@@ -135,10 +190,16 @@ namespace MarshmallowAvalanche {
         }
 
         private void CheckForWallInteraction() {
-            bool isSliding = State == CharacterState.Sliding;
-            bool isOnLeftWall = KeyState(Input.Left) && isSliding;
-            bool isOnRightWall = KeyState(Input.Right) && isSliding;
-            bool isWallJumping = KeyPressed(Input.Jump) && isSliding;
+            // Don't allow sliding or wall jumping from static objects
+            bool isSliding = State == CharacterState.Sliding &&
+                !Flags.IsFlagSet(
+                    _collisionData.Collider?.PhysicsLayer ?? _previousFrameCollisionData.Collider.PhysicsLayer,
+                    (int) PhysicsLayers.Static
+                );
+
+            bool isOnLeftWall = KeyDown(CharacterInput.Left) && isSliding;
+            bool isOnRightWall = KeyDown(CharacterInput.Right) && isSliding;
+            bool isWallJumping = KeyPressed(CharacterInput.Jump) && isSliding;
             bool isSlidingDown = isOnLeftWall || isOnRightWall;
 
             if (isWallJumping) {
@@ -161,6 +222,15 @@ namespace MarshmallowAvalanche {
             }
         }
 
+        private void MatchFallingBlockVelocity() {
+            if (Grounded) {
+                FallingBlock block = _collisionData.Collider?.GetComponent<FallingBlock>();
+                if (block != null) {
+                    _velocity.Y = block.Velocity.Y;
+                }
+            }
+        }
+
         private float ConvergeToZero(float value, float deltaTime, float moveSpeed, float rate = 7.5f) {
             float delta = moveSpeed * deltaTime * rate;
             if (value < 0) {
@@ -171,31 +241,33 @@ namespace MarshmallowAvalanche {
             return value;
         }
 
-        private void UpdateTimers(GameTime gt) {
-            float deltaTime = (float)gt.ElapsedGameTime.TotalSeconds;
-            timeSinceLeftWallJump -= deltaTime;
-            timeSinceRightWallJump -= deltaTime;
+        private void UpdateTimers() {
+            timeSinceLeftWallJump -= Time.DeltaTime;
+            timeSinceRightWallJump -= Time.DeltaTime;
         }
 
-        private void UpdatePreviousInputs() {
-            for (int i = 0; i < frameInput.Length; ++i) {
-                prevFrameInput[i] = frameInput[i];
-                frameInput[i] = false;
+        private bool KeyReleased(CharacterInput input) {
+            foreach (Keys key in inputKeyMap[input]) {
+                if (Input.IsKeyReleased(key))
+                    return true;
             }
-        }
-        private bool KeyReleased(Input input) {
-            int idx = (int)input;
-            return !frameInput[idx] && prevFrameInput[idx];
+            return false;
         }
 
-        private bool KeyPressed(Input input) {
-            int idx = (int)input;
-            return frameInput[idx] && !prevFrameInput[idx];
+        private bool KeyPressed(CharacterInput input) {
+            foreach (Keys key in inputKeyMap[input]) {
+                if (Input.IsKeyPressed(key))
+                    return true;
+            }
+            return false;
         }
 
-        private bool KeyState(Input input) {
-            int idx = (int)input;
-            return frameInput[idx];
+        private bool KeyDown(CharacterInput input) {
+            foreach (Keys key in inputKeyMap[input]) {
+                if (Input.IsKeyDown(key))
+                    return true;
+            }
+            return false;
         }
     }
 

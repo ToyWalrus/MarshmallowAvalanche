@@ -1,47 +1,42 @@
-﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using MarshmallowAvalanche.Utils;
+﻿using Microsoft.Xna.Framework;
+using Nez;
 
 namespace MarshmallowAvalanche.Physics {
-    public abstract class PhysicsObject {
-        public bool IsStatic => this is StaticObject;
-        public bool IsDynamic => this is MovingObject;
+    public abstract class PhysicsObject : Component, IUpdatable {
+        private Vector2 _initialSize;
 
-        protected Vector2 _position;
-        public virtual Vector2 Position {
-            get => _position;
-            set => _position = value;
+        public Vector2 Size => Collider.Bounds.Size;
+        public RectangleF Bounds => Collider.Bounds;
+        public BoxCollider Collider { get; private set; }
+
+        protected CollisionResult _collisionData;
+        protected CollisionResult _previousFrameCollisionData;
+
+        public override void OnAddedToEntity() {
+            Collider = Entity.GetComponent<BoxCollider>();
+
+            if (Collider == null) {
+                Collider = Entity.AddComponent<BoxCollider>();
+            }
+
+            Collider.SetSize(_initialSize.X, _initialSize.Y);
+            Collider.SetLocalOffset(Vector2.Zero);
         }
 
-        protected Vector2 _size;
-        public virtual Vector2 Size {
-            get => _size;
-            set => _size = value;
+        public PhysicsObject() : this(Vector2.Zero) { }
+        public PhysicsObject(Vector2 size) {
+            _initialSize = size;
         }
 
-        public abstract string Tag {
-            get;
-            protected set;
-        }
+        public abstract void Update();
+    }
 
-        public RectF Bounds => new RectF(Position, Size);
-
-        public PhysicsObject(Vector2 position, Vector2 size) {
-            _position = position;
-            _size = size;
-        }
-
-        public PhysicsObject(Rectangle bounds) {
-            _position = bounds.Location.ToVector2();
-            _size = bounds.Size.ToVector2();
-        }
-
-        public abstract void Update(GameTime gt);
-
-        public virtual bool CanCollideWith(PhysicsObject other) {
-            return true;
-        }
-
-        public virtual void CheckForCollisionWith(PhysicsObject other) { }
+    [System.Flags]
+    public enum PhysicsLayers {
+        None = 0,
+        Static = 1 << 0,
+        Block = 1 << 1,
+        Marshmallow = 1 << 2,
+        Liquid = 1 << 3,
     }
 }

@@ -1,80 +1,83 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using MarshmallowAvalanche.Physics;
-using MarshmallowAvalanche.Utils;
 using Microsoft.Xna.Framework;
+using Nez;
 
 namespace MarshmallowAvalanche {
-    public class BlockSpawner {
-        private RectF _spawnBounds;
-        public RectF SpawnBounds {
-            get => _spawnBounds;
-            private set {
-                _spawnBounds = value;
-            }
-        }
-        private Vector2 minSpawnSize;
-        private Vector2 maxSpawnSize;
+    public class BlockSpawner : Component {
+        public Vector2 Size { get; private set; }
+        private float minSpawnSize;
+        private float maxSpawnSize;
+        private readonly HashSet<FallingBlock> spawnedBlocks;
 
-        public BlockSpawner(RectF spawnBounds, Vector2 minSpawnSize, Vector2 maxSpawnSize) {
-            SpawnBounds = spawnBounds;
+        public BlockSpawner(Vector2 boundsSize, float minSpawnSize, float maxSpawnSize) {
+            Size = boundsSize;
             this.minSpawnSize = minSpawnSize;
             this.maxSpawnSize = maxSpawnSize;
-        }
-
-        public BlockSpawner(Vector2 position, Vector2 size, Vector2 minSpawnSize, Vector2 maxSpawnSize) {
-            SpawnBounds = new RectF(position, size);
-            this.minSpawnSize = minSpawnSize;
-            this.maxSpawnSize = maxSpawnSize;
+            spawnedBlocks = new HashSet<FallingBlock>();
         }
 
         #region Getters/Setters
-        public void MoveSpawnLocation(Vector2 offset) {
-            _spawnBounds.Position += offset;
-        }
-
-        public void SetSpawnLocation(Vector2 position) {
-            _spawnBounds.Position = position;
-        }
-
         public void SetSpawnBoundsSize(Vector2 size) {
-            _spawnBounds.Size = size;
+            Size = size;
         }
 
-        public void SetSpawnBounds(RectF newBounds) {
-            SpawnBounds = newBounds;
-        }
-
-        public void SetMinSpawnSize(Vector2 size) {
+        public void SetMinSpawnSize(float size) {
             minSpawnSize = size;
         }
 
-        public void SetMaxSpawnSize(Vector2 size) {
+        public void SetMaxSpawnSize(float size) {
             maxSpawnSize = size;
         }
         #endregion
 
-        public FallingBlock SpawnBlock(bool keepSquare = false, string tag = FallingBlock.DefaultTag) {
-            Random rand = new Random();
-            float blockWidth = (float)rand.NextDouble() * (maxSpawnSize.X - minSpawnSize.X) + minSpawnSize.X;
-            float blockHeight = (float)rand.NextDouble() * (maxSpawnSize.Y - minSpawnSize.Y) + minSpawnSize.Y;
+        /// <summary>
+        /// Creates an entity in the scene and attaches a FallingBlock
+        /// component to it and sets the fall speed.
+        /// </summary>
+        /// <returns>A new FallingBlock, or null if a block could not be spawned</returns>
+        public FallingBlock SpawnBlock(float fallSpeed) {
+            FallingBlock block = SpawnBlock();
+            if (block == null) return null;
 
-            if (keepSquare) {
-                float averageSize = (blockWidth + blockHeight) / 2;
-                blockWidth = averageSize;
-                blockHeight = averageSize;
-            }
-
-            float centerX = (float)rand.NextDouble() * SpawnBounds.Size.X + SpawnBounds.Left;
-            float centerY = (float)rand.NextDouble() * SpawnBounds.Size.Y + SpawnBounds.Top;
-            Vector2 position = new Vector2(centerX - blockWidth / 2, centerY - blockHeight / 2);
-
-            return new FallingBlock(position, new Vector2(blockWidth, blockHeight), tag);
-        }
-        
-        public FallingBlock SpawnBlock(float fallSpeed, bool keepSquare = false, string tag = FallingBlock.DefaultTag) {
-            FallingBlock block = SpawnBlock(keepSquare, tag);
             block.MaxFallSpeed = fallSpeed;
             return block;
+        }
+
+        /// <summary>
+        /// Creates an entity in the scene and attaches a FallingBlock
+        /// component to it.
+        /// </summary>
+        /// <returns>A new FallingBlock, or null if a block could not be spawned</returns>
+        public FallingBlock SpawnBlock() {
+            System.Random rand = new System.Random();
+            Vector2 spawnerPosition = Entity.Position;
+
+            float size = (float)rand.NextDouble() * (maxSpawnSize - minSpawnSize) + minSpawnSize;
+            float centerX = (float)rand.NextDouble() * Size.X + spawnerPosition.X;
+            float centerY = (float)rand.NextDouble() * Size.Y + spawnerPosition.Y;
+            Vector2 blockPosition = new Vector2(centerX - size / 2, centerY - size / 2);
+            Vector2 blockSize = new Vector2(size, size);
+
+            if (!CanSpawnBlockAt(blockPosition, blockSize)) {
+                return null;
+            }
+
+            FallingBlock block = Entity.Scene
+                .CreateEntity("falling-block-" + spawnedBlocks.Count)
+                .AddComponent(new FallingBlock(blockSize));
+
+            block.Transform.SetPosition(blockPosition);
+            spawnedBlocks.Add(block);
+
+            return block;
+        }
+
+        private bool CanSpawnBlockAt(Vector2 position, Vector2 blockSize) {
+            foreach (FallingBlock block in spawnedBlocks) {
+                if (block.Bounds.Intersects(new RectangleF(position, blockSize))) return false;
+            }
+            return true;
         }
     }
 }

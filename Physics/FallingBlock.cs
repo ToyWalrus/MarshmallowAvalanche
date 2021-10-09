@@ -1,76 +1,101 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Xna.Framework;
+using Nez;
+using Nez.Sprites;
+using Nez.Textures;
 
 namespace MarshmallowAvalanche.Physics {
     public class FallingBlock : MovingObject {
-        public const string DefaultTag = "FallingBlock";
+        public const int RenderLayer = 10;
+        private SpriteRenderer sr;
+        private Color savedColor;
 
-        public override string Tag {
-            get;
-            protected set;
+        public override float MaxFallSpeed
+        {
+            get => base.MaxFallSpeed;
+            set {
+                _velocity.Y = value;
+                base.MaxFallSpeed = value;
+            }
         }
 
-        public FallingBlock(Vector2 position, Vector2 size, string tag = DefaultTag) : base(position, size) {
+        public FallingBlock(Vector2 size) : base(size) {
             MaxFallSpeed = 500;
             Grounded = false;
-            Tag = tag;
             Velocity = new Vector2(0, MaxFallSpeed);
         }
 
-        public override void Update(GameTime gt) {
+        public override void OnAddedToEntity() {
+            base.OnAddedToEntity();
+            Collider.PhysicsLayer = (int) PhysicsLayers.Block;
+            Collider.CollidesWithLayers = (int) (PhysicsLayers.Block | PhysicsLayers.Marshmallow | PhysicsLayers.Static);
+
+            sr = Entity.GetComponent<SpriteRenderer>();
+            if (sr == null) {
+                sr = Entity.AddComponent<SpriteRenderer>();
+            }
+            sr.Sprite = new Sprite(Entity.Scene.Content.LoadTexture("blocks/FallingBlock"));
+            sr.RenderLayer = RenderLayer;
+
+            Rectangle spriteBounds = sr.Sprite.Texture2D.Bounds;
+            float scale = Bounds.Width / spriteBounds.Width;
+
+            Collider.SetSize(spriteBounds.Width, spriteBounds.Height);
+            sr.Transform.SetScale(scale);
+
+            if (savedColor != null) {
+                sr.Color = savedColor;
+            }
+        }
+
+        public void SetBlockColor(Color color) {
+            savedColor = color;
+            if (sr != null) {
+                sr.SetColor(color);
+            }
+        }
+
+        public override void Update() {
             // Blocks will never move once grounded
-            if (Grounded) return;
-            base.Update(gt);
+            if (Grounded) {
+                return;
+            }
+            base.Update();
         }
 
-        public override bool CanCollideWith(PhysicsObject other) {
-            // Blocks should not collide with character,
-            // or in other words, a character should not
-            // impede the block's progress.
-            return !(other is Character);
-        }
-
-        // Once collision status has been set for block
-        // it won't be altered
         public override void ResetCollisionStatus() { }
 
-        public override void CheckForCollisionWith(PhysicsObject other) {
-            if (other == null || Grounded || !CanCollideWith(other)) return;
-            var otherBounds = other.Bounds;
+        public override void SetTouchingBorder(PhysicsObject other) {
+            if (other == null) {
+                return;
+            }
+            Vector2 overlap = _collisionData.MinimumTranslationVector;
 
-            if (Bounds.Intersects(otherBounds, out Vector2 overlap)) {
-                if (other is FallingBlock otherBlock) {
-                    bool xIsSmaller = Math.Abs(overlap.X) < Math.Abs(overlap.Y);
-                    if (xIsSmaller) {
-                        // Blocks will never be moving horizontally so 
-                        // this should only ever happen if a block spawns
-                        // in another block
-                        if (overlap.X > 0) {
-                            _position.X = MathF.Floor(otherBounds.Left - Size.X);
-                        } else if (overlap.X < 0) {
-                            _position.X = MathF.Floor(otherBounds.Right);
-                        }
-                    }
-                    if (overlap.Y > 0) {
-                        _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
+            if (overlap.Y > 0) {
+                if (other is StaticObject) {
+                    Grounded = true;
+                    _velocity.Y = 0;
+                } else if (other is FallingBlock otherBlock) {
+                    // We only want to set this block to grounded if
+                    // it is on a static object or another block that
+                    // is also grounded
 
-                        // Ground the block if the other block is grounded
-                        if (otherBlock.Grounded) {
-                            Grounded = true;
-                        }
+                    Grounded = otherBlock.Grounded;
+                    if (Grounded && _velocity.Y > 0) {
+                        _velocity.Y = 0;
                     }
-                } else if (other is StaticObject) {
-                    if (overlap.Y > 0) {
+                } else if (other is Character marshmallow && marshmallow.Grounded) {
+                    // Squash that pesky marshmallow!
+                    float overlapAmount = MathF.Abs(overlap.Y);
+                    marshmallow.GetCrushed(overlapAmount, Collider.Bounds.Bottom);
+
+                    if (marshmallow.IsDead) {
+                        _velocity.Y = 0;
                         Grounded = true;
-                        _position.Y = MathF.Floor(otherBounds.Top - Size.Y);
-                        if (_velocity.Y > 0) {
-                            _velocity.Y = 0;
-                        }
                     }
                 }
             }
+
         }
     }
 }
