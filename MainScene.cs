@@ -30,7 +30,8 @@ namespace MarshmallowAvalanche {
         // The delay between the spawn of blocks
         private float blockSpawnInterval = 1f;
 
-        private float blockFallSpeed = 200;
+        // Make 1800 for an entirely different game :)
+        private float blockFallSpeed = 250;
 
         // The timer to count down the spawn interval
         private float blockSpawnTimer;
@@ -109,7 +110,9 @@ namespace MarshmallowAvalanche {
 
             // Music from Unity PlatformerMicrogame project
             var music = Content.LoadSoundEffect("Music");
-            music.Play();
+            var musicInstance = music.CreateInstance();
+            musicInstance.IsLooped = true;
+            musicInstance.Play();
 
             //scoreLine = CreateEntity("score-line").AddComponent<PrototypeSpriteRenderer>();
             //scoreLine.Color = Color.Yellow;
@@ -144,8 +147,8 @@ namespace MarshmallowAvalanche {
             }
 
             if (isSpawningBlocks && blockSpawnIncreaseTimer < 0) {
-                blockSpawnInterval -= .0075f;
-                blockSpawnInterval = System.Math.Max(.15f, blockSpawnInterval);
+                blockSpawnInterval -= .01f;
+                blockSpawnInterval = System.Math.Max(.05f, blockSpawnInterval);
                 blockSpawnIncreaseTimer = blockSpawnIncreaseInterval;
             }
         }
@@ -176,7 +179,7 @@ namespace MarshmallowAvalanche {
                 risingZoneTimer = risingZoneRateIncreaseInterval;
             } else if (risingZone.IsRising && risingZoneTimer < 0) {
                 risingZoneTimer = risingZoneRateIncreaseInterval;
-                risingZone.IncreaseRiseRate(.4f);
+                risingZone.IncreaseRiseRate(.4f, 70);
             }
         }
 
